@@ -3,7 +3,7 @@
 #Build Flag
 REBUILD=$1
 #Build optimized result
-if $REBUILD eq 'TRUE'
+if $REBUILD eq 'TRUE' THEN
   docker run --rm -v "$(pwd)":/code \
     --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
     --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
