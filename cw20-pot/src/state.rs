@@ -1,36 +1,43 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, DepsMut, StdResult, Uint128};
-use cw_storage_plus::{Item, Map, U128Key};
+use cosmwasm_std::{Addr, Decimal, Uint128};
+use cw_controllers::Claims;
+use cw_storage_plus::Item;
+use cw_utils::Duration;
 
+pub const CLAIMS: Claims = Claims::new("claims");
+
+/// Investment info is fixed at instantiation, and is used to control the function of the contract
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Config {
+pub struct InvestmentInfo {
+    /// Owner created the contract and takes a cut
     pub owner: Addr,
-    pub cw20_addr: Addr,
+    /// This is the denomination we can stake (and only one we accept for payments)
+    pub bond_denom: String,
+    /// This is the unbonding period of the native staking module
+    /// We need this to only allow claims to be redeemed after the money has arrived
+    pub unbonding_period: Duration,
+    /// This is how much the owner takes as a cut when someone unbonds
+    pub exit_tax: Decimal,
+    /// All tokens are bonded to this validator
+    /// FIXME: address validation doesn't work for validator addresses
+    pub validator: String,
+    /// This is the minimum amount we will pull out to reinvest, as well as a minimum
+    /// that can be unbonded (to avoid needless staking tx)
+    pub min_withdrawal: Uint128,
 }
 
-pub const CONFIG: Item<Config> = Item::new("config");
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Pot {
-    /// target_addr is the address that will receive the pot
-    pub target_addr: Addr,
-    /// threshold_amount is the token threshold amount
-    pub threshold: Uint128,
-    /// collected keeps information on how much is collected for this pot.
-    pub collected: Uint128,
+/// Supply is dynamic and tracks the current supply of staked and ERC20 tokens.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+pub struct Supply {
+    /// issued is how many derivative tokens this contract has issued
+    pub issued: Uint128,
+    /// bonded is how many native tokens exist bonded to the validator
+    pub bonded: Uint128,
+    /// claims is how many tokens need to be reserved paying back those who unbonded
+    pub claims: Uint128,
 }
-/// POT_SEQ holds the last pot ID
-pub const POT_SEQ: Item<Uint128> = Item::new("pot_seq");
-pub const POTS: Map<U128Key, Pot> = Map::new("pot");
 
-pub fn save_pot(deps: DepsMut, pot: &Pot) -> StdResult<()> {
-    // increment id if exists, or return 1
-    let id = POT_SEQ.load(deps.storage)?;
-    let id = id.checked_add(Uint128::new(1))?;
-    POT_SEQ.save(deps.storage, &id)?;
-
-    // save pot with id
-    POTS.save(deps.storage, id.u128().into(), pot)
-}
+pub const INVESTMENT: Item<InvestmentInfo> = Item::new("invest");
+pub const TOTAL_SUPPLY: Item<Supply> = Item::new("total_supply");
