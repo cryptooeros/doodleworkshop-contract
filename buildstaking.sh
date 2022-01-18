@@ -4,6 +4,10 @@
 PARAM=$1
 ####################################    Constants    ##################################################
 #depends on mainnet or testnet
+#NODE="--node https://rpc.juno.omniflix.co:443"
+#CHAIN_ID=juno-1
+#DENOM="ujuno"
+
 NODE="--node https://rpc.juno.giansalex.dev:443"
 CHAIN_ID=uni-1
 DENOM="ujunox"
@@ -12,7 +16,7 @@ DENOM="ujunox"
 NODECHAIN=" $NODE --chain-id $CHAIN_ID"
 TXFLAG=" $NODECHAIN --gas-prices 0.03$DENOM --gas auto --gas-adjustment 1.3"
 WALLET="--from workshop"
-WASMFILE="artifacts/cw20_staking.wasm"
+WASMFILE="artifacts/cw20_escrow.wasm"
 TXHASHFILE="uploadtx"
 CONTRACTADDRFILE="contractaddr"
 WORKSHOPADDR="juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s"
@@ -56,15 +60,6 @@ GetCode() {
     return $CODE_ID
 }
 
-Instantiate() {
-    GetCode
-    CODE_ID=$?
-    junod tx wasm instantiate $CODE_ID \
-    '{"name":"CREWStaking","symbol":"POOD","decimals":6,"initial_balances":[{"address":"$WORKSHOPADDR","amount":"12345678000"}]}' \
-    --amount 50000$DENOM --label "Poodlecoin erc20" $WALLET $TXFLAG -y
-
-}
-
 GetContractAddress() {
     echo "================================================="
     echo "Get contract address by code"
@@ -94,6 +89,12 @@ ListCode() {
     echo "================================================="
 }
 
+Instantiate() {
+    GetCode
+    CODE_ID=$?
+    junod tx wasm instantiate $CODE_ID '{}' --label "WorkShop" $WALLET $TXFLAG -y
+}
+
 
 
 #################################### End of Function ###################################################
@@ -105,25 +106,4 @@ $PARAM
 #     OptimizeBuild
 # fi
 
-# if [[ $PARAM == "upload" ]]; then
-#     Upload
-# fi
-
-# if [[ $PARAM == "getcode" ]]; then
-#     GetCode
-# fi
-
-# if [[ $PARAM == "listcode" ]]; then
-#     ListCode
-# fi
-
-# if [[ $PARAM == "contractaddr" ]]; then
-#     GetContractAddress
-# fi
-
-# if [[ $PARAM == "instantiate" ]]; then
-#     Instantiate
-# fi
-junod tx wasm instantiate 54 '{"name":"CREWStaking", "symbol":"CST", "decimals":6, "validator":"juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s", "unbonding_period": {"height":"1000", "Time":"1000"}, "exit_tax": 10, "min_withdrawal": 10}' --label "CREWStaking" --from workshop --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1 --gas-prices 0.03ujunox --gas auto --gas-adjustment 1.3 -y
-
-junod tx wasm instantiate 54 '{"name":"CREWStaking", "symbol":"CST", "decimals":6, "validator":"juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s"}' --label "CREWStaking" --from workshop --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1 --gas-prices 0.03ujunox --gas auto --gas-adjustment 1.3 -y
+#junod tx wasm instantiate 54 '{"name":"CREWStaking", "symbol":"CST", "decimals":6, "validator":"juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s", "unbonding_period": "time(60 * 60)", "exit_tax": 10, "min_withdrawal": 10}' --label "CREWStaking" --from workshop --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1 --gas-prices 0.03ujunox --gas auto --gas-adjustment 1.3 -y
