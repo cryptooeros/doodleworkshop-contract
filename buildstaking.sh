@@ -106,25 +106,6 @@ $PARAM
 #     OptimizeBuild
 # fi
 
-# if [[ $PARAM == "upload" ]]; then
-#     Upload
-# fi
-
-# if [[ $PARAM == "getcode" ]]; then
-#     GetCode
-# fi
-
-# if [[ $PARAM == "listcode" ]]; then
-#     ListCode
-# fi
-
-# if [[ $PARAM == "contractaddr" ]]; then
-#     GetContractAddress
-# fi
-
-# if [[ $PARAM == "instantiate" ]]; then
-#     Instantiate
-# fi
 junod tx wasm instantiate 54 '{"name":"CREWStaking", "symbol":"CST", "decimals":6, "validator":"juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s", "unbonding_period": {"height":"1000", "Time":"1000"}, "exit_tax": 10, "min_withdrawal": 10}' --label "CREWStaking" --from workshop --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1 --gas-prices 0.03ujunox --gas auto --gas-adjustment 1.3 -y
 
 junod tx wasm instantiate 54 '{"name":"CREWStaking", "symbol":"CST", "decimals":6, "validator":"juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s", "unbonding_period": {"height":"1000", "Time":"1000"}}' --label "CREWStaking" --from workshop --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1 --gas-prices 0.03ujunox --gas auto --gas-adjustment 1.3 -y
