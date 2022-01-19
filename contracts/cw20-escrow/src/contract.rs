@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, SubMsg, WasmMsg,
+    StdResult, SubMsg, WasmMsg, Uint128
 };
 
 use cw2::set_contract_version;
@@ -84,21 +84,31 @@ pub fn execute_create(
     let crew_addr: Addr = deps.api.addr_validate(CREW_ADDRESS)?;
     cw20_whitelist.push(crew_addr);
     
-    let escrow_balance = match balance {
-        Balance::Native(balance) => GenericBalance {
-            native: balance.0,
-            cw20: vec![],
-        },
-        Balance::Cw20(token) => {
-            // make sure the token sent is on the whitelist by default
-            if !cw20_whitelist.iter().any(|t| t == &token.address) {
-                cw20_whitelist.push(token.address.clone())
-            }
-            GenericBalance {
-                native: vec![],
-                cw20: vec![token],
-            }
-        }
+    let crew_addr2: Addr = deps.api.addr_validate(CREW_ADDRESS)?;
+    let crewtoken:Cw20CoinVerified = Cw20CoinVerified {
+        address: crew_addr2,
+        amount: Uint128::zero()
+    };
+    // let escrow_balance = match balance {
+    //     Balance::Native(balance) => GenericBalance {
+    //         native: balance.0,
+    //         cw20: vec![],
+    //     },
+    //     Balance::Cw20(token) => {
+    //         // make sure the token sent is on the whitelist by default
+    //         if !cw20_whitelist.iter().any(|t| t == &token.address) {
+    //             cw20_whitelist.push(token.address.clone())
+    //         }
+    //         GenericBalance {
+    //             native: vec![],
+    //             cw20: vec![token],
+    //         }
+    //     }
+    // };
+
+    let escrow_balance = GenericBalance {
+        native: vec![],
+        cw20: vec![crewtoken],
     };
 
     let escrow = Escrow {
@@ -134,12 +144,12 @@ pub fn execute_top_up(
     // this fails is no escrow there
     let mut escrow = ESCROWS.load(deps.storage, &id)?;
 
-    if let Balance::Cw20(token) = &balance {
-        // ensure the token is on the whitelist
-        if !escrow.cw20_whitelist.iter().any(|t| t == &token.address) {
-            return Err(ContractError::NotInWhitelist {});
-        }
-    };
+    // if let Balance::Cw20(token) = &balance {
+    //     // ensure the token is on the whitelist
+    //     if !escrow.cw20_whitelist.iter().any(|t| t == &token.address) {
+    //         return Err(ContractError::NotInWhitelist {});
+    //     }
+    // };
     
     escrow.balance.add_tokens(balance);
 
