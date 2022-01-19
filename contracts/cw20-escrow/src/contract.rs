@@ -17,6 +17,7 @@ use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS};
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw20-escrow";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+const CREW_ADDRESS: &str = "juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -73,12 +74,16 @@ pub fn execute_create(
     balance: Balance,
     sender: &Addr,
 ) -> Result<Response, ContractError> {
+
+    //Achilles
     // if balance.is_empty() {
     //     return Err(ContractError::EmptyBalance {});
     // }
 
     let mut cw20_whitelist = msg.addr_whitelist(deps.api)?;
-
+    let crew_addr: Addr = deps.api.addr_validate(CREW_ADDRESS)?;
+    cw20_whitelist.push(crew_addr);
+    
     let escrow_balance = match balance {
         Balance::Native(balance) => GenericBalance {
             native: balance.0,
