@@ -140,7 +140,7 @@ pub fn execute_top_up(
             return Err(ContractError::NotInWhitelist {});
         }
     };
-
+    
     escrow.balance.add_tokens(balance);
 
     // and save
