@@ -141,16 +141,14 @@ CreateEscrow() {
 # QueryTX $?
 # echo $? > lasthash
 $PARAM
-# if [[ $PARAM == "build" ]]; then
-#     OptimizeBuild
-# fi
 
-#junod tx wasm instantiate 54 '{"name":"CREWStaking", "symbol":"CST", "decimals":6, "validator":"juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s", "unbonding_period": {"height":"1000", "Time":"1000"}, "exit_tax": 10, "min_withdrawal": 10}' --label "CREWStaking" --from workshop --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1 --gas-prices 0.03ujunox --gas auto --gas-adjustment 1.3 -y
-
-#junod tx wasm instantiate 54 '{"name":"CREWStaking", "symbol":"CST", "decimals":6, "validator":"juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s", "unbonding_period": {"height":"1000", "Time":"1000"}}' --label "CREWStaking" --from workshop --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1 --gas-prices 0.03ujunox --gas auto --gas-adjustment 1.3 -y
-#Step
-#Upload
-#Instantiate
-#GetContract
-
-#junod query wasm contract-state smart juno16q9wqk00prx0nkyqk9r5xzqn5n52fa4vztz6jumv4x76mdqla5hqwwm9ur '{"list":{}}' --node https://rpc.juno.giansalex.dev:443 --chain-id uni-1
+if [[ $PARAM != "" ]]; then
+     $PARAM
+fi
+if [[ $PARAM == "" ]]; then
+     OptimizeBuild
+     Upload
+     Instantiate
+     DetailsQuery
+     CreateEscrow
+fi
