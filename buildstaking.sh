@@ -172,8 +172,8 @@ TopUp() {
 if [[ $PARAM == "" ]]; then
     OptimizeBuild
     Upload
-elif [[ $PARAM == "default" ]]; then
     GetCode
+elif [[ $PARAM == "default" ]]; then
     Instantiate
     GetContractAddress
     CreateEscrow
