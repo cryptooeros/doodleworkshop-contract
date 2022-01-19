@@ -73,9 +73,9 @@ pub fn execute_create(
     balance: Balance,
     sender: &Addr,
 ) -> Result<Response, ContractError> {
-    if balance.is_empty() {
-        return Err(ContractError::EmptyBalance {});
-    }
+    // if balance.is_empty() {
+    //     return Err(ContractError::EmptyBalance {});
+    // }
 
     let mut cw20_whitelist = msg.addr_whitelist(deps.api)?;
 
@@ -299,14 +299,14 @@ mod tests {
         // create an escrow
         let create = CreateMsg {
             id: "foobar".to_string(),
-            arbiter: String::from("juno1m0snhthwl80hweae54fwre97y47urlxjf5ua6j"),
-            recipient: String::from("juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"),
+            arbiter: String::from("arbitrate"),
+            recipient: String::from("recd"),
             end_time: None,
             end_height: Some(123456),
             cw20_whitelist: None,
         };
-        let sender = String::from("juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s");
-        let balance = coins(100, "CREW");
+        let sender = String::from("source");
+        let balance = coins(100, "tokens");
         let info = mock_info(&sender, &balance);
         let msg = ExecuteMsg::Create(create.clone());
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
