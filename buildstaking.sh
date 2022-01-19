@@ -125,8 +125,8 @@ CreateEscrow() {
     GetContractAddress
     CONTRACT_ADDR=$(cat $CONTRACTADDRFILE)
     #junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"'$ACHILLESADDR'", "arbiter":"' $WORKSHOPADDR'", "recipient":"'$ACHILLESADDR'"}}' $WALLET $TXFLAG
-    #junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz", "arbiter":"juno1m0snhthwl80hweae54fwre97y47urlxjf5ua6j", "recipient":"juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"}}' --amount 1CREW $WALLET $TXFLAG
-    junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"foobar", "arbiter":"arbitrate", "recipient":"recd", "end_height":"123456", "amount":"100CREW"}}' $WALLET $TXFLAG
+    junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz", "arbiter":"juno1m0snhthwl80hweae54fwre97y47urlxjf5ua6j", "recipient":"juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"}}' $WALLET $TXFLAG
+    #junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"foobar", "arbiter":"arbitrate", "recipient":"recd", "end_height":"123456"}}' $WALLET $TXFLAG
     #echo $CMD
 	#junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"first", "arbiter":"second", "recipient":"third", "cw20_balance":{"address"}}}' --amount 1CREW $WALLET $TXFLAG
     #junod tx wasm execute $CW20CONTRCTADDR '{"transfer":{"amount":"1","recipient":"'$ACHILLESADDR'"}}' $WALLET $TXFLAG
