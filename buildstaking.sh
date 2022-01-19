@@ -166,29 +166,25 @@ CreateEscrow() {
 #Transfer to Created Test Escrow
 TopUp() {
     CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"topup":{"id":"'$ADDR_ACHILLES'"}}' --amount 5CREW $WALLET $TXFLAG
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"top_up":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
 }
 
 #################################### End of Function ###################################################
-Batch() {
-    OptimizeBuild
-    TXHASH=$(junod tx wasm store $WASMFILE $WALLET $TXFLAG --output json -y | jq -r '.txhash')
-	CODE_ID=$(junod query tx $TXHASH $NODECHAIN --output json | jq -r '.logs[0].events[-1].attributes[0].value')
-    junod tx wasm instantiate $CODE_ID '{}' --label "WorkShop" $WALLET $TXFLAG -y
-    CONTRACT_ADDR=$(junod query wasm list-contract-by-code $CODE_ID $NODECHAIN --output json | jq -r '.contracts[0]')
-    
-    echo "Contract Address:"$CONTRACT_ADDR
-
-    junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_WORKSHOP'", "recipient":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
-
-    junod tx wasm execute $CONTRACT_ADDR '{"topup":{"id":"'$ADDR_ACHILLES'"}}' --amount 5CREW $WALLET $TXFLAG
-    
-}
 if [[ $PARAM == "" ]]; then
-    Batch
-elif [[ $PARAM == "default" ]]; then
+    OptimizeBuild
+    Upload
+sleep 5
+    GetCode
+sleep 2
+    Instantiate
+sleep 2
+    GetContractAddress
+sleep 2
     CreateEscrow
+sleep2
     TopUp
+sleep2
+    PrintDetailsQuery
 else
     $PARAM
 fi
