@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, SubMsg, WasmMsg, Uint128
+    StdResult, SubMsg, WasmMsg,
 };
 
 use cw2::set_contract_version;
@@ -17,7 +17,6 @@ use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS};
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw20-escrow";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-const CREW_ADDRESS: &str = "juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz";
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -74,41 +73,27 @@ pub fn execute_create(
     balance: Balance,
     sender: &Addr,
 ) -> Result<Response, ContractError> {
-
-    //Achilles : As CREW_TOKEN is not validated
-    // if balance.is_empty() {
-    //     return Err(ContractError::EmptyBalance {});
-    // }
+    if balance.is_empty() {
+        return Err(ContractError::EmptyBalance {});
+    }
 
     let mut cw20_whitelist = msg.addr_whitelist(deps.api)?;
-    let crew_addr: Addr = deps.api.addr_validate(CREW_ADDRESS)?;
-    cw20_whitelist.push(crew_addr);
-    
-    let crew_addr2: Addr = deps.api.addr_validate(CREW_ADDRESS)?;
-    let crewtoken:Cw20CoinVerified = Cw20CoinVerified {
-        address: crew_addr2,
-        amount: Uint128::zero()
-    };
-    // let escrow_balance = match balance {
-    //     Balance::Native(balance) => GenericBalance {
-    //         native: balance.0,
-    //         cw20: vec![],
-    //     },
-    //     Balance::Cw20(token) => {
-    //         // make sure the token sent is on the whitelist by default
-    //         if !cw20_whitelist.iter().any(|t| t == &token.address) {
-    //             cw20_whitelist.push(token.address.clone())
-    //         }
-    //         GenericBalance {
-    //             native: vec![],
-    //             cw20: vec![token],
-    //         }
-    //     }
-    // };
 
-    let escrow_balance = GenericBalance {
-        native: vec![],
-        cw20: vec![crewtoken],
+    let escrow_balance = match balance {
+        Balance::Native(balance) => GenericBalance {
+            native: balance.0,
+            cw20: vec![],
+        },
+        Balance::Cw20(token) => {
+            // make sure the token sent is on the whitelist by default
+            if !cw20_whitelist.iter().any(|t| t == &token.address) {
+                cw20_whitelist.push(token.address.clone())
+            }
+            GenericBalance {
+                native: vec![],
+                cw20: vec![token],
+            }
+        }
     };
 
     let escrow = Escrow {
@@ -136,21 +121,19 @@ pub fn execute_top_up(
     id: String,
     balance: Balance,
 ) -> Result<Response, ContractError> {
-    //Achilles : As CREW_TOKEN is not validated
-    // if balance.is_empty() {
-    //     return Err(ContractError::EmptyBalance {});
-    // }
-    
+    if balance.is_empty() {
+        return Err(ContractError::EmptyBalance {});
+    }
     // this fails is no escrow there
     let mut escrow = ESCROWS.load(deps.storage, &id)?;
 
-    // if let Balance::Cw20(token) = &balance {
-    //     // ensure the token is on the whitelist
-    //     if !escrow.cw20_whitelist.iter().any(|t| t == &token.address) {
-    //         return Err(ContractError::NotInWhitelist {});
-    //     }
-    // };
-    
+    if let Balance::Cw20(token) = &balance {
+        // ensure the token is on the whitelist
+        if !escrow.cw20_whitelist.iter().any(|t| t == &token.address) {
+            return Err(ContractError::NotInWhitelist {});
+        }
+    };
+
     escrow.balance.add_tokens(balance);
 
     // and save
