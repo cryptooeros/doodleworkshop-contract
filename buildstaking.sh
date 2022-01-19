@@ -153,7 +153,7 @@ PrintListQuery() {
 #Print Special Escrow Details
 PrintDetailsQuery() {
     CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details":{"id":"'$1'"}}' $NODECHAIN
+    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details":{"id":"'$ADDR_ACHILLES'"}}' $NODECHAIN
 }
 
 #Create Test Escrow
