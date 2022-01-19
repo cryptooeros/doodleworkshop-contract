@@ -7,10 +7,13 @@ PARAM=$1
 #NODE="--node https://rpc.juno.omniflix.co:443"
 #CHAIN_ID=juno-1
 #DENOM="ujuno"
+#CW20CONTRCTADDR="juno18cpnn3cnrr9xq7r0cqp7shl7slasf27nrmskw4rrw8c6hyp8u7rqe2nulg"
 
 NODE="--node https://rpc.juno.giansalex.dev:443"
 CHAIN_ID=uni-1
 DENOM="ujunox"
+CW20CONTRCTADDR="juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz"
+BIGTESTADDR="juno1dj87fruymmpk77lrpx2cjqwr5j5ue3kjd3ljee6g4kjj3hxg4yqsrmh5y0"
 
 #not depends
 NODECHAIN=" $NODE --chain-id $CHAIN_ID"
@@ -21,6 +24,8 @@ TXHASHFILE="uploadtx"
 CONTRACTADDRFILE="contractaddr"
 WORKSHOPADDR="juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s"
 ACHILLESADDR="juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"
+ARBITERADDR="juno1m0snhthwl80hweae54fwre97y47urlxjf5ua6j"
+
 
 CREWADDR="juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz"
 ####################################    Functions    ###################################################
@@ -111,13 +116,23 @@ ListQuery() {
 DetailsQuery() {
     GetContractAddress
     CONTRACT_ADDR=$(cat $CONTRACTADDRFILE)
-    junod query wasm contract-state smart $CONTRACT_ADDR '{"details":{"id":1}}' $NODECHAIN
+    junod query wasm contract-state smart $CW20CONTRCTADDR '{"balance":{"address":"'$ACHILLESADDR'"}}' $NODECHAIN
+    #junod query wasm contract-state smart $CONTRACT_ADDR '{"details":{"id":1}}' $NODECHAIN
+    junod query wasm contract-state smart $CONTRACT_ADDR '{"list":{}}' $NODECHAIN
 }
 
 CreateEscrow() {
     GetContractAddress
     CONTRACT_ADDR=$(cat $CONTRACTADDRFILE)
-    junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"$ACHILLESADDR", "arbiter":"$ACHILLESADDR", "recipient":"$ACHILLESADDR"}}' $WALLET $TXFLAG
+    #junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"'$ACHILLESADDR'", "arbiter":"' $WORKSHOPADDR'", "recipient":"'$ACHILLESADDR'"}}' $WALLET $TXFLAG
+    #junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz", "arbiter":"juno1m0snhthwl80hweae54fwre97y47urlxjf5ua6j", "recipient":"juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"}}' --amount 1CREW $WALLET $TXFLAG
+    junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"foobar", "arbiter":"arbitrate", "recipient":"recd", "end_height":"123456", "amount":"100CREW"}}' $WALLET $TXFLAG
+    #echo $CMD
+	#junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"first", "arbiter":"second", "recipient":"third", "cw20_balance":{"address"}}}' --amount 1CREW $WALLET $TXFLAG
+    #junod tx wasm execute $CW20CONTRCTADDR '{"transfer":{"amount":"1","recipient":"'$ACHILLESADDR'"}}' $WALLET $TXFLAG
+#    echo $CMD > hhh
+#    echo $CMD
+	
 }
 
 
