@@ -142,13 +142,13 @@ CreateEscrow() {
 # echo $? > lasthash
 $PARAM
 
-if [[ $PARAM != "" ]]; then
-     $PARAM
-fi
-if [[ $PARAM == "" ]]; then
-     OptimizeBuild
-     Upload
-     Instantiate
-     DetailsQuery
-     CreateEscrow
-fi
+# if [[ $PARAM != "" ]]; then
+#      $PARAM
+# fi
+# if [[ $PARAM == "" ]]; then
+#      OptimizeBuild
+#      Upload
+#      Instantiate
+#      DetailsQuery
+#      CreateEscrow
+# fi
