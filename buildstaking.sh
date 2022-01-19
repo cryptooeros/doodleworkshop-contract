@@ -172,7 +172,7 @@ TopUp() {
 if [[ $PARAM == "" ]]; then
     OptimizeBuild
     Upload
-elif [[ $PARAM == "default"]]; then    
+elif [[ $PARAM == "default" ]]; then
     GetCode
     Instantiate
     GetContractAddress
