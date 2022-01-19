@@ -75,7 +75,7 @@ pub fn execute_create(
     sender: &Addr,
 ) -> Result<Response, ContractError> {
 
-    //Achilles
+    //Achilles : As CREW_TOKEN is not validated
     // if balance.is_empty() {
     //     return Err(ContractError::EmptyBalance {});
     // }
@@ -126,9 +126,11 @@ pub fn execute_top_up(
     id: String,
     balance: Balance,
 ) -> Result<Response, ContractError> {
-    if balance.is_empty() {
-        return Err(ContractError::EmptyBalance {});
-    }
+    //Achilles : As CREW_TOKEN is not validated
+    // if balance.is_empty() {
+    //     return Err(ContractError::EmptyBalance {});
+    // }
+    
     // this fails is no escrow there
     let mut escrow = ESCROWS.load(deps.storage, &id)?;
 
