@@ -79,7 +79,7 @@ GetCode() {
     echo $TXHASH
     
     QUERYTX="junod query tx $TXHASH $NODECHAIN --output json"
-	CODE_ID=$($QUERYTX | jq -r '.logs[0].events[-1].attributes[0].value')
+	CODE_ID=$(junod query tx $TXHASH $NODECHAIN --output json | jq -r '.logs[0].events[-1].attributes[0].value')
 	echo "Contract Code_id:"$CODE_ID
 
     #save to FILE_CODE_ID
@@ -173,8 +173,7 @@ TopUp() {
 Batch() {
     OptimizeBuild
     TXHASH=$(junod tx wasm store $WASMFILE $WALLET $TXFLAG --output json -y | jq -r '.txhash')
-    QUERYTX="junod query tx $TXHASH $NODECHAIN --output json"
-	CODE_ID=$($QUERYTX | jq -r '.logs[0].events[-1].attributes[0].value')
+	CODE_ID=$(junod query tx $TXHASH $NODECHAIN --output json | jq -r '.logs[0].events[-1].attributes[0].value')
     junod tx wasm instantiate $CODE_ID '{}' --label "WorkShop" $WALLET $TXFLAG -y
     CONTRACT_ADDR=$(junod query wasm list-contract-by-code $CODE_ID $NODECHAIN --output json | jq -r '.contracts[0]')
     
