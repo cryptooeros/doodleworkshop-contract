@@ -71,7 +71,7 @@ Upload() {
 #Read code from FILE_UPLOADHASH
 GetCode() {
     echo "================================================="
-    echo "Get code from txHash written on $FILE_UPLOADHASH"
+    echo "Get code from transaction hash written on $FILE_UPLOADHASH"
     
     #read from FILE_UPLOADHASH
     TXHASH=$(cat $FILE_UPLOADHASH)
@@ -116,11 +116,6 @@ GetContractAddress() {
     echo "================================================="
 }
 
-#Get Instantiated Contract Address From File
-GetContractAddressFromFile() {
-    return $(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-}
-
 ###################################################################################################
 ###################################################################################################
 ###################################################################################################
@@ -131,7 +126,7 @@ ListCode() {
 }
 
 PrintContractState() {
-    GetContractAddressFromFile
+    $CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
     junod query wasm contract $? $NODECHAIN
 }
 
@@ -151,36 +146,38 @@ PrintWalletBalance() {
 
 #Print Escrow List
 PrintListQuery() {
-    GetContractAddressFromFile
-    junod query wasm contract-state smart $? '{"list":{}}' $NODECHAIN
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"list":{}}' $NODECHAIN
 }
 
 #Print Special Escrow Details
 PrintDetailsQuery() {
-    GetContractAddressFromFile
-    junod query wasm contract-state smart $? '{"details":{"id":"'$1'"}}' $NODECHAIN
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details":{"id":"'$1'"}}' $NODECHAIN
 }
 
 #Create Test Escrow
 CreateEscrow() {
-    GetContractAddressFromFile
-    junod tx wasm execute $? '{"create":{"id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_WORKSHOP'", "recipient":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"create":{"id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_WORKSHOP'", "recipient":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
 }
 
 #Transfer to Created Test Escrow
 TopUp() {
-    GetContractAddressFromFile
-    junod tx wasm execute $? '{"topup":{"id":"'$ADDR_ACHILLES'"}}' --amount 5CREW $WALLET $TXFLAG
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"topup":{"id":"'$ADDR_ACHILLES'"}}' --amount 5CREW $WALLET $TXFLAG
 }
 
 #################################### End of Function ###################################################
-
 if [[ $PARAM == "" ]]; then
     OptimizeBuild
     Upload
+    sleep 3
     GetCode
     Instantiate
     GetContractAddress
+    CreateEscrow
+    TopUp
 else
     $PARAM
 fi
