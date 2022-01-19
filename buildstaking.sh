@@ -171,12 +171,17 @@ TopUp() {
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
     OptimizeBuild
+    sleep 2
     Upload
+    sleep 2
     GetCode
-elif [[ $PARAM == "default" ]]; then
+    sleep 2
     Instantiate
+    sleep 2
     GetContractAddress
+elif [[ $PARAM == "default" ]]; then
     CreateEscrow
+    sleep 2
     TopUp
 else
     $PARAM
