@@ -48,9 +48,18 @@ OptimizeBuild() {
         --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
         --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
         cosmwasm/rust-optimizer:0.12.4
-    
+}
+
+RustBuild() {
+
     echo "================================================="
-    
+    echo "Rust Optimize Build Start"
+
+    cd contracts/cw20-escrow
+    RUSTFLAGS='-C link-arg=-s' cargo wasm
+
+    cd ../../
+    cp target/wasm32-unknown-unknown/release/cw20_escrow.wasm $WASMFILE
 }
 
 #Writing to FILE_UPLOADHASH
@@ -64,8 +73,6 @@ Upload() {
     #save to FILE_UPLOADHASH
     echo $UPLOADTX > $FILE_UPLOADHASH
     echo "wrote last transaction hash to $FILE_UPLOADHASH"
-    
-    echo "================================================="
 }
 
 #Read code from FILE_UPLOADHASH
@@ -84,8 +91,6 @@ GetCode() {
 
     #save to FILE_CODE_ID
     echo $CODE_ID > $FILE_CODE_ID
-    
-    echo "================================================="
 }
 
 #Instantiate Contract
@@ -96,8 +101,6 @@ Instantiate() {
     #read from FILE_CODE_ID
     CODE_ID=$(cat $FILE_CODE_ID)
     junod tx wasm instantiate $CODE_ID '{}' --label "WorkShop" $WALLET $TXFLAG -y
-
-    echo "================================================="
 }
 
 #Get Instantiated Contract Address
@@ -113,7 +116,6 @@ GetContractAddress() {
 
     #save to FILE_WORKSHOP_CONTRACT_ADDR
     echo $CONTRACT_ADDR > $FILE_WORKSHOP_CONTRACT_ADDR
-    echo "================================================="
 }
 
 
@@ -169,9 +171,15 @@ TopUp() {
     junod tx wasm execute $CONTRACT_WORKSHOP '{"top_up":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
 }
 
+CreateReceive() {
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"receive":{"sender":"'$ADDR_ACHILLES'", "amount":"15", "msg": { "id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_ARBITER'", "recipient":"'$ADDR_ACHILLES'" }}}' $WALLET $TXFLAG
+}
+
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
-    OptimizeBuild
+    RustBuild
     Upload
 sleep 5
     GetCode
