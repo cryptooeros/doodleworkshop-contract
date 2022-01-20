@@ -182,7 +182,7 @@ pub fn execute_refund(
 
     // the arbiter can send anytime OR anyone can send after expiration
     // if !escrow.is_expired(&env) && info.sender != escrow.arbiter {
-    if !escrow.is_expired(&env) && info.sender != escrow.source {
+    if !escrow.is_expired(&env) || info.sender != escrow.source {
         Err(ContractError::Unauthorized {})
     } else {
         // we delete the escrow
