@@ -198,8 +198,8 @@ sleep 5
     Instantiate
 sleep 5
     GetContractAddress
-sleep 5
-    CreateEscrow
+#sleep 5
+#    CreateEscrow
 # sleep 5
 #     TopUp
 # sleep 5
