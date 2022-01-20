@@ -173,9 +173,20 @@ TopUp() {
 
 CreateReceive() {
     CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-
     junod tx wasm execute $CONTRACT_WORKSHOP '{"receive":{"sender":"'$ADDR_ACHILLES'", "amount":"15", "msg": { "id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_ARBITER'", "recipient":"'$ADDR_ACHILLES'" }}}' $WALLET $TXFLAG
 }
+
+Approve() {
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"approve":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
+}
+
+Refund() {
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"refund":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
+}
+
+
 
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
