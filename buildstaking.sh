@@ -190,20 +190,20 @@ Refund() {
 
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
-    RustBuild
+    OptimizeBuild
     Upload
 sleep 5
     GetCode
-sleep 2
+sleep 5
     Instantiate
-sleep 2
+sleep 5
     GetContractAddress
-sleep 2
+sleep 5
     CreateEscrow
-sleep2
-    TopUp
-sleep2
-    PrintDetailsQuery
+# sleep 5
+#     TopUp
+# sleep 5
+#     PrintDetailsQuery
 else
     $PARAM
 fi
