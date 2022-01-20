@@ -15,7 +15,7 @@ use crate::msg::{
 use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw20-escrow";
+const CONTRACT_NAME: &str = "Doodle Workshop";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -181,9 +181,9 @@ pub fn execute_refund(
     let escrow = ESCROWS.load(deps.storage, &id)?;
 
     // the arbiter can send anytime OR anyone can send after expiration
-    if !escrow.is_expired(&env) && info.sender != escrow.arbiter {
-        Err(ContractError::Unauthorized {})
-    } else {
+    // if !escrow.is_expired(&env) && info.sender != escrow.arbiter {
+        // Err(ContractError::Unauthorized {})
+    // } else {
         // we delete the escrow
         ESCROWS.remove(deps.storage, &id);
 
@@ -195,7 +195,7 @@ pub fn execute_refund(
             .add_attribute("id", id)
             .add_attribute("to", escrow.source)
             .add_submessages(messages))
-    }
+    // }
 }
 
 fn send_tokens(to: &Addr, balance: &GenericBalance) -> StdResult<Vec<SubMsg>> {
