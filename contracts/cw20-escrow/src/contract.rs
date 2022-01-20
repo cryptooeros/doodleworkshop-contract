@@ -1,21 +1,21 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    /*from_binary,*/to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    from_binary, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response,
     StdResult, SubMsg, WasmMsg,
 };
 
 use cw2::set_contract_version;
-use cw20::{Balance, Cw20Coin, Cw20CoinVerified, Cw20ExecuteMsg/*, Cw20ReceiveMsg*/};
+use cw20::{Balance, Cw20Coin, Cw20CoinVerified, Cw20ExecuteMsg, Cw20ReceiveMsg};
 
 use crate::error::ContractError;
 use crate::msg::{
-    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, QueryMsg, /*ReceiveMsg, */Cw20PlainReceiveMsg
+    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, QueryMsg, ReceiveMsg,
 };
 use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "Doodle Workshop:1.0.0";
+const CONTRACT_NAME: &str = "crates.io:cw20-escrow";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -51,21 +51,20 @@ pub fn execute(
 pub fn execute_receive(
     deps: DepsMut,
     info: MessageInfo,
-    wrapper: Cw20PlainReceiveMsg,
+    wrapper: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let msg: CreateMsg = wrapper.msg;
+    let msg: ReceiveMsg = from_binary(&wrapper.msg)?;
     let balance = Balance::Cw20(Cw20CoinVerified {
         address: info.sender,
         amount: wrapper.amount,
     });
     let api = deps.api;
-    // match msg {
-    //     ReceiveMsg::Create(msg) => {
-    //         execute_create(deps, msg, balance, &api.addr_validate(&wrapper.sender)?)
-    //     }
-    //     ReceiveMsg::TopUp { id } => execute_top_up(deps, id, balance),
-    // }
-    execute_create(deps, msg, balance, &api.addr_validate(&wrapper.sender)?)
+    match msg {
+        ReceiveMsg::Create(msg) => {
+            execute_create(deps, msg, balance, &api.addr_validate(&wrapper.sender)?)
+        }
+        ReceiveMsg::TopUp { id } => execute_top_up(deps, id, balance),
+    }
 }
 
 pub fn execute_create(

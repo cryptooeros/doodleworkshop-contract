@@ -1,20 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Api, Coin, StdResult, Uint128};
+use cosmwasm_std::{Addr, Api, Coin, StdResult};
 
-use cw20::{Cw20Coin};
+use cw20::{Cw20Coin, Cw20ReceiveMsg};
 
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct InstantiateMsg {}
-
-//Achilles
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Cw20PlainReceiveMsg {
-    pub sender: String,
-    pub amount: Uint128,
-    pub msg: CreateMsg,
-}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -37,8 +29,7 @@ pub enum ExecuteMsg {
         id: String,
     },
     /// This accepts a properly-encoded ReceiveMsg from a cw20 contract
-    //Receive(Cw20ReceiveMsg),
-    Receive(Cw20PlainReceiveMsg),
+    Receive(Cw20ReceiveMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
