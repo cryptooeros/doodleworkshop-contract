@@ -182,8 +182,9 @@ pub fn execute_refund(
 
     // the arbiter can send anytime OR anyone can send after expiration
     // if !escrow.is_expired(&env) && info.sender != escrow.arbiter {
-        // Err(ContractError::Unauthorized {})
-    // } else {
+    if !escrow.is_expired(&env) && info.sender != escrow.source {
+        Err(ContractError::Unauthorized {})
+    } else {
         // we delete the escrow
         ESCROWS.remove(deps.storage, &id);
 
@@ -195,7 +196,7 @@ pub fn execute_refund(
             .add_attribute("id", id)
             .add_attribute("to", escrow.source)
             .add_submessages(messages))
-    // }
+    }
 }
 
 fn send_tokens(to: &Addr, balance: &GenericBalance) -> StdResult<Vec<SubMsg>> {
