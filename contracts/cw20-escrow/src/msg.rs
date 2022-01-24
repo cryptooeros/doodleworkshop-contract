@@ -33,7 +33,8 @@ pub enum ExecuteMsg {
     /// This accepts a properly-encoded ReceiveMsg from a cw20 contract
     Receive(Cw20ReceiveMsg),
     /// Set Constant
-    SetConstant(ConstantMsg)
+    SetConstant(ConstantMsg),
+    
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

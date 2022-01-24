@@ -50,7 +50,7 @@ pub fn execute(
         ExecuteMsg::Approve { id } => execute_approve(deps, env, info, id),
         ExecuteMsg::TopUp { id, start_time, end_time } => {
             execute_top_up(
-                deps, info, id, start_time, end_time, Balance::from(info.funds))
+                deps, id, start_time, end_time, Balance::from(info.funds), &info.sender)
         },
         ExecuteMsg::Refund { id } => execute_refund(deps, env, info, id),
         ExecuteMsg::Receive(msg) => execute_receive(deps, info, msg),
@@ -58,17 +58,6 @@ pub fn execute(
     }
 }
 
-pub fn getManagerAddr(
-    deps: DepsMut
-) -> Result<Addr, ContractError> {
-    let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
-    if manager_addr.eq("") {
-        return Err(ContractError::Unauthorized {});
-    }
-    
-    let res:Addr = deps.api.addr_validate(&manager_addr)?;
-    Ok(res)
-}
 pub fn execute_setconstant(
     deps: DepsMut,
     info: MessageInfo,
@@ -76,8 +65,9 @@ pub fn execute_setconstant(
 ) -> Result<Response, ContractError> {
     
     let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
+    let maddr:Addr = deps.api.addr_validate(&manager_addr)?;
 
-    if manager_addr.ne("") && info.sender != getManagerAddr(deps)? {
+    if manager_addr.ne("") && info.sender != maddr {
         return Err(ContractError::Unauthorized {});
     }
     CONSTANT.save(deps.storage, "manager_addr", &msg.manager_addr)?;
@@ -107,7 +97,7 @@ pub fn execute_receive(
             execute_create(deps, msg, balance, &api.addr_validate(&wrapper.sender)?)
         }
         ReceiveMsg::TopUp { id, start_time, end_time } => {
-            execute_top_up(deps, info, id, start_time, end_time, balance)
+            execute_top_up(deps, id, start_time, end_time, balance, &api.addr_validate(&wrapper.sender)?)
         }
     }
 }
@@ -146,10 +136,10 @@ pub fn execute_create(
         }
     };
 
-    let mut accountinfo:Vec<AccountInfo>;
     let escrow = Escrow {
-        client: deps.api.addr_validate(&msg.client)?,
-        accountinfo: accountinfo,
+        //client: deps.api.addr_validate(&msg.client)?,
+        client: sender.clone(),
+        accountinfo: vec![],
         end_time: msg.end_time,
         balance: escrow_balance,
         cw20_whitelist,
@@ -171,11 +161,11 @@ pub fn execute_create(
 
 pub fn execute_top_up(
     deps: DepsMut,
-    info: MessageInfo,
     id: String,
     start_time: u64,
     end_time: u64,
     balance: Balance,
+    sender: &Addr
 ) -> Result<Response, ContractError> {
     if balance.is_empty() {
         return Err(ContractError::EmptyBalance {});
@@ -193,8 +183,8 @@ pub fn execute_top_up(
         }
     };
 
-    let mut accountinfo:AccountInfo = AccountInfo {
-        addr: info.sender,
+    let accountinfo:AccountInfo = AccountInfo {
+        addr: sender.clone(),
         amount: cwval,
         start_time: start_time,
         end_time: end_time
@@ -219,9 +209,10 @@ pub fn execute_approve(
     // this fails is no escrow there
     let escrow = ESCROWS.load(deps.storage, &id)?;
 
+    let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
+    let maddr:Addr = deps.api.addr_validate(&manager_addr)?;
     
-
-    if info.sender != escrow.client || info.sender != getManagerAddr(deps)? {
+    if info.sender != escrow.client || info.sender != maddr {
         Err(ContractError::Unauthorized {})
     // } else if escrow.is_expired(&env) {
     //     Err(ContractError::Expired {})
@@ -230,14 +221,16 @@ pub fn execute_approve(
         // ESCROWS.remove(deps.storage, &id);
 
         // send all tokens out
-        let messages: Vec<SubMsg> = send_tokens(&escrow.client, &escrow.balance)?;
-        let messages: Vec<SubMsg> = send_tokens(&getManagerAddr(deps)?, &escrow.balance)?;
+        let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
+        let maddr:Addr = deps.api.addr_validate(&manager_addr)?;
+        let messages1: Vec<SubMsg> = send_tokens(&escrow.client, &escrow.balance)?;
+        let messages2: Vec<SubMsg> = send_tokens(&maddr, &escrow.balance)?;
 
         Ok(Response::new()
             .add_attribute("action", "approve")
             .add_attribute("id", id)
             .add_attribute("to", escrow.client)
-            .add_submessages(messages))
+            .add_submessages(messages1))
     }
 }
 
@@ -250,7 +243,8 @@ pub fn execute_refund(
     // this fails is no escrow there
     let escrow = ESCROWS.load(deps.storage, &id)?;
 
-    let managerAddr:Addr = getManagerAddr(deps)?;
+    let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
+    let maddr:Addr = deps.api.addr_validate(&manager_addr)?;
     
     // if !escrow.is_expired(&env) || info.sender != escrow.source {
     //     Err(ContractError::Unauthorized {})
