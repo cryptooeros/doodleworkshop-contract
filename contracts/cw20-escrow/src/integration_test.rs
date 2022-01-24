@@ -81,12 +81,12 @@ fn escrow_happy_path_cw20_tokens() {
     assert_eq!(escrow_balance, Uint128::zero());
 
     // send some tokens to create an escrow
-    let arb = Addr::unchecked("arbiter");
+    let arb = Addr::unchecked("client");
     let ben = String::from("beneficiary");
     let id = "demo".to_string();
     let create_msg = ReceiveMsg::Create(CreateMsg {
         id: id.clone(),
-        arbiter: arb.to_string(),
+        client: arb.to_string(),
         recipient: ben.clone(),
         end_height: None,
         end_time: None,
@@ -125,7 +125,7 @@ fn escrow_happy_path_cw20_tokens() {
         .query_wasm_smart(&escrow_addr, &QueryMsg::Details { id: id.clone() })
         .unwrap();
     assert_eq!(id, details.id);
-    assert_eq!(arb, details.arbiter);
+    assert_eq!(arb, details.client);
     assert_eq!(ben, details.recipient);
     assert_eq!(
         vec![Cw20Coin {

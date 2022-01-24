@@ -20,4 +20,10 @@ pub enum ContractError {
 
     #[error("Escrow id already in use")]
     AlreadyInUse {},
+
+    #[error("Insufficient token amount for create work.")]
+    InsufficientCreate {},
+
+    #[error("Insufficient token amount for stake.")]
+    InsufficientTopUp {},
 }

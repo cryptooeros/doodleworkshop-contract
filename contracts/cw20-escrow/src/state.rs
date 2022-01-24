@@ -12,6 +12,14 @@ pub struct GenericBalance {
     pub cw20: Vec<Cw20CoinVerified>,
 }
 
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct AccountInfo {
+    pub addr: Addr,
+    pub amount: u128,
+    pub start_time: Option<u64>,
+    pub end_time: Option<u64>
+}
+
 impl GenericBalance {
     pub fn add_tokens(&mut self, add: Balance) {
         match add {
@@ -49,23 +57,20 @@ impl GenericBalance {
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Escrow {
-    /// arbiter can decide to approve or refund the escrow
-    pub arbiter: Addr,
+    /// client can decide to approve or refund the escrow
+    pub client: Addr,
     /// if approved, funds go to the recipient
-    pub recipient: Addr,
+    pub accountinfo: Vec<AccountInfo>,
     /// if refunded, funds go to the source
-    pub source: Addr,
-    /// When end height set and block height exceeds this value, the escrow is expired.
-    /// Once an escrow is expired, it can be returned to the original funder (via "refund").
-    pub end_height: Option<u64>,
-    /// When end time (in seconds since epoch 00:00:00 UTC on 1 January 1970) is set and
-    /// block time exceeds this value, the escrow is expired.
-    /// Once an escrow is expired, it can be returned to the original funder (via "refund").
     pub end_time: Option<u64>,
     /// Balance in Native and Cw20 tokens
     pub balance: GenericBalance,
     /// All possible contracts that we accept tokens from
     pub cw20_whitelist: Vec<Addr>,
+    pub title: String,
+    pub url: String,
+    pub threshold: u64,
+    pub state: u8
 }
 
 impl Escrow {
@@ -91,7 +96,7 @@ impl Escrow {
 }
 
 pub const ESCROWS: Map<&str, Escrow> = Map::new("escrow");
-
+pub const CONSTANT: Map<&str, String> = Map::new("constant");
 /// This returns the list of ids for all registered escrows
 pub fn all_escrow_ids(storage: &dyn Storage) -> StdResult<Vec<String>> {
     ESCROWS
@@ -114,7 +119,7 @@ mod tests {
 
     fn dummy_escrow() -> Escrow {
         Escrow {
-            arbiter: Addr::unchecked("arb"),
+            client: Addr::unchecked("arb"),
             recipient: Addr::unchecked("recip"),
             source: Addr::unchecked("source"),
             end_height: None,
