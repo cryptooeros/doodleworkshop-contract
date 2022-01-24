@@ -10,7 +10,8 @@ PARAM=$1
 #DENOM="ujuno"
 #CONTRACT_CREW="juno18cpnn3cnrr9xq7r0cqp7shl7slasf27nrmskw4rrw8c6hyp8u7rqe2nulg"
 
-NODE="--node https://rpc.juno.giansalex.dev:443"
+#NODE="--node https://rpc.juno.giansalex.dev:443"
+NODE="--node https://rpc.uni.junomint.com:443"
 CHAIN_ID=uni-1
 DENOM="ujunox"
 CONTRACT_CREW="juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz"
@@ -36,6 +37,31 @@ ADDR_ARBITER="juno1m0snhthwl80hweae54fwre97y47urlxjf5ua6j"
 ###################################################################################################
 ###################################################################################################
 ###################################################################################################
+#Environment Functions
+CreateEnv() {
+    sudo apt-get update && sudo apt upgrade -y
+    sudo apt-get install make build-essential gcc git jq chrony -y
+    wget https://golang.org/dl/go1.17.3.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go1.17.3.linux-amd64.tar.gz
+
+    export GOROOT=/usr/local/go
+    export GOPATH=$HOME/go
+    export GO111MODULE=on
+    export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+    
+    rustup default stable
+    rustup target add wasm32-unknown-unknown
+
+    git clone https://github.com/CosmosContracts/juno
+    cd juno
+    git fetch
+    git checkout v2.1.0
+    make install
+
+    junod keys import workshop workshop.key
+
+}
+
 #Contract Functions
 
 #Build Optimized Contracts
@@ -59,6 +85,7 @@ RustBuild() {
     RUSTFLAGS='-C link-arg=-s' cargo wasm
 
     cd ../../
+    mkdir artifacts
     cp target/wasm32-unknown-unknown/release/cw20_escrow.wasm $WASMFILE
 }
 
@@ -190,7 +217,7 @@ Refund() {
 
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
-    OptimizeBuild
+    RustBuild
     Upload
 sleep 5
     GetCode
