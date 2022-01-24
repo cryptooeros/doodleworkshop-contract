@@ -12,7 +12,7 @@ use crate::error::ContractError;
 use crate::msg::{
     CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, QueryMsg, ReceiveMsg, ConstantMsg
 };
-use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS, CONSTANT};
+use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS, CONSTANT, AccountInfo};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "Doodle Workshop";
@@ -48,13 +48,27 @@ pub fn execute(
             execute_create(deps, msg, Balance::from(info.funds), &info.sender)
         }
         ExecuteMsg::Approve { id } => execute_approve(deps, env, info, id),
-        ExecuteMsg::TopUp { id, start_time, end_time } => execute_top_up(deps, id, start_time, end_time, Balance::from(info.funds)),
+        ExecuteMsg::TopUp { id, start_time, end_time } => {
+            execute_top_up(
+                deps, info, id, start_time, end_time, Balance::from(info.funds))
+        },
         ExecuteMsg::Refund { id } => execute_refund(deps, env, info, id),
         ExecuteMsg::Receive(msg) => execute_receive(deps, info, msg),
         ExecuteMsg::SetConstant(msg) => execute_setconstant(deps, info, msg)
     }
 }
 
+pub fn getManagerAddr(
+    deps: DepsMut
+) -> Result<Addr, ContractError> {
+    let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
+    if manager_addr.eq("") {
+        return Err(ContractError::Unauthorized {});
+    }
+    
+    let res:Addr = deps.api.addr_validate(&manager_addr)?;
+    Ok(res)
+}
 pub fn execute_setconstant(
     deps: DepsMut,
     info: MessageInfo,
@@ -63,10 +77,9 @@ pub fn execute_setconstant(
     
     let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
 
-    if manager_addr.ne("") && info.sender != deps.api.addr_validate(&manager_addr)? {
+    if manager_addr.ne("") && info.sender != getManagerAddr(deps)? {
         return Err(ContractError::Unauthorized {});
     }
-    
     CONSTANT.save(deps.storage, "manager_addr", &msg.manager_addr)?;
     CONSTANT.save(deps.storage, "create_rate", &msg.create_rate)?;
     CONSTANT.save(deps.storage, "manager_rate", &msg.manager_rate)?;
@@ -93,7 +106,9 @@ pub fn execute_receive(
         ReceiveMsg::Create(msg) => {
             execute_create(deps, msg, balance, &api.addr_validate(&wrapper.sender)?)
         }
-        ReceiveMsg::TopUp { id } => execute_top_up(deps, id, wrapper.start_time, msg.end_time, balance),
+        ReceiveMsg::TopUp { id, start_time, end_time } => {
+            execute_top_up(deps, info, id, start_time, end_time, balance)
+        }
     }
 }
 
@@ -117,7 +132,7 @@ pub fn execute_create(
         },
         Balance::Cw20(token) => {
             // make sure the token sent is on the whitelist by default
-            if &token.address != token_address {
+            if &token.address != &token_address {
                 return Err(ContractError::Unauthorized {})
             }
 
@@ -131,7 +146,7 @@ pub fn execute_create(
         }
     };
 
-    let mut accountinfo:Vec<AccountInfo> = Vec<AccountInfo>::new();
+    let mut accountinfo:Vec<AccountInfo>;
     let escrow = Escrow {
         client: deps.api.addr_validate(&msg.client)?,
         accountinfo: accountinfo,
@@ -156,6 +171,7 @@ pub fn execute_create(
 
 pub fn execute_top_up(
     deps: DepsMut,
+    info: MessageInfo,
     id: String,
     start_time: u64,
     end_time: u64,
@@ -167,16 +183,19 @@ pub fn execute_top_up(
     // this fails is no escrow there
     let mut escrow = ESCROWS.load(deps.storage, &id)?;
 
+    let mut cwval:u128 = 0;
     if let Balance::Cw20(token) = &balance {
         // ensure the token is on the whitelist
         if !escrow.cw20_whitelist.iter().any(|t| t == &token.address) {
             return Err(ContractError::NotInWhitelist {});
+        } else {
+            cwval = token.amount.u128();
         }
     };
 
     let mut accountinfo:AccountInfo = AccountInfo {
-        addr: info.sender
-        amount: balance.amount,
+        addr: info.sender,
+        amount: cwval,
         start_time: start_time,
         end_time: end_time
     };
@@ -200,9 +219,9 @@ pub fn execute_approve(
     // this fails is no escrow there
     let escrow = ESCROWS.load(deps.storage, &id)?;
 
-    let manager_addr:Addr = deps.api.addr_validate(CONSTANT.load(deps.storage, "manager_addr"));
+    
 
-    if info.sender != escrow.client || info.sender != manager_addr {
+    if info.sender != escrow.client || info.sender != getManagerAddr(deps)? {
         Err(ContractError::Unauthorized {})
     // } else if escrow.is_expired(&env) {
     //     Err(ContractError::Expired {})
@@ -212,7 +231,7 @@ pub fn execute_approve(
 
         // send all tokens out
         let messages: Vec<SubMsg> = send_tokens(&escrow.client, &escrow.balance)?;
-        let messages: Vec<SubMsg> = send_tokens(&manager_addr, &escrow.balance)?;
+        let messages: Vec<SubMsg> = send_tokens(&getManagerAddr(deps)?, &escrow.balance)?;
 
         Ok(Response::new()
             .add_attribute("action", "approve")
@@ -231,8 +250,8 @@ pub fn execute_refund(
     // this fails is no escrow there
     let escrow = ESCROWS.load(deps.storage, &id)?;
 
-    let manager_addr:Addr = deps.api.addr_validate(CONSTANT.load(deps.storage, "manager_addr"));
-
+    let managerAddr:Addr = getManagerAddr(deps)?;
+    
     // if !escrow.is_expired(&env) || info.sender != escrow.source {
     //     Err(ContractError::Unauthorized {})
     // } else {
@@ -240,12 +259,12 @@ pub fn execute_refund(
         // ESCROWS.remove(deps.storage, &id);
 
         // send all tokens out
-        let messages = send_tokens(info.sender, &escrow.balance)?;
+        let messages = send_tokens(&info.sender, &escrow.balance)?;
 
         Ok(Response::new()
             .add_attribute("action", "refund")
             .add_attribute("id", id)
-            .add_attribute("to", escrow.source)
+            .add_attribute("to", escrow.client)
             .add_submessages(messages))
     // }
 }
@@ -312,9 +331,6 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     let details = DetailsResponse {
         id,
         client: escrow.client.into(),
-        recipient: escrow.recipient.into(),
-        source: escrow.source.into(),
-        end_height: escrow.end_height,
         end_time: escrow.end_time,
         native_balance,
         cw20_balance: cw20_balance?,
@@ -353,6 +369,10 @@ mod tests {
             client: String::from("arbitrate"),
             end_time: Some(123456),
             cw20_whitelist: Some(vec![String::from("other-token")]),
+            title: String::from("title"),
+            url: String::from("url"),
+            threshold: 100,
+            state: 0
         };
         let receive = Cw20ReceiveMsg {
             sender: String::from("source"),
@@ -373,7 +393,6 @@ mod tests {
             DetailsResponse {
                 id: "foobar".to_string(),
                 client: String::from("arbitrate"),
-                source: String::from("source"),
                 end_time: Some(123456),
                 native_balance: vec![],
                 cw20_balance: vec![Cw20Coin {
@@ -391,7 +410,7 @@ mod tests {
         assert_eq!(1, res.messages.len());
         assert_eq!(("action", "approve"), res.attributes[0]);
         let send_msg = Cw20ExecuteMsg::Transfer {
-            recipient: create.recipient,
+            recipient: create.client,
             amount: receive.amount,
         };
         assert_eq!(
@@ -470,10 +489,12 @@ mod tests {
         let create = CreateMsg {
             id: "foobar".to_string(),
             client: String::from("arbitrate"),
-            recipient: String::from("recd"),
             end_time: None,
-            end_height: None,
             cw20_whitelist: Some(whitelist),
+            title: String::from("title"),
+            url: String::from("url"),
+            threshold: 10,
+            state: 0,
         };
         let sender = String::from("source");
         let balance = vec![coin(100, "fee"), coin(200, "stake")];
@@ -488,6 +509,8 @@ mod tests {
         let info = mock_info(&sender, &extra_native);
         let top_up = ExecuteMsg::TopUp {
             id: create.id.clone(),
+            start_time: 123456,
+            end_time: 654321
         };
         let res = execute(deps.as_mut(), mock_env(), info, top_up).unwrap();
         assert_eq!(0, res.messages.len());
@@ -497,6 +520,8 @@ mod tests {
         let bar_token = String::from("bar_token");
         let base = TopUp {
             id: create.id.clone(),
+            start_time: 123456,
+            end_time: 654321
         };
         let top_up = ExecuteMsg::Receive(Cw20ReceiveMsg {
             sender: String::from("random"),
@@ -513,6 +538,8 @@ mod tests {
         let baz_token = String::from("baz_token");
         let base = TopUp {
             id: create.id.clone(),
+            start_time: 123456,
+            end_time: 654321
         };
         let top_up = ExecuteMsg::Receive(Cw20ReceiveMsg {
             sender: String::from("random"),
@@ -527,6 +554,8 @@ mod tests {
         let foo_token = String::from("foo_token");
         let base = TopUp {
             id: create.id.clone(),
+            start_time: 123456,
+            end_time: 654321
         };
         let top_up = ExecuteMsg::Receive(Cw20ReceiveMsg {
             sender: String::from("random"),
@@ -549,14 +578,14 @@ mod tests {
         assert_eq!(
             res.messages[0],
             SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-                to_address: create.recipient.clone(),
+                to_address: create.client.clone(),
                 amount: vec![coin(100, "fee"), coin(500, "stake"), coin(250, "random")],
             }))
         );
 
         // second one release bar cw20 token
         let send_msg = Cw20ExecuteMsg::Transfer {
-            recipient: create.recipient.clone(),
+            recipient: create.client.clone(),
             amount: Uint128::new(7890),
         };
         assert_eq!(
@@ -570,7 +599,7 @@ mod tests {
 
         // third one release foo cw20 token
         let send_msg = Cw20ExecuteMsg::Transfer {
-            recipient: create.recipient,
+            recipient: create.client,
             amount: Uint128::new(888),
         };
         assert_eq!(

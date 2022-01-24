@@ -43,6 +43,8 @@ pub enum ReceiveMsg {
     /// Adds all sent native tokens to the contract
     TopUp {
         id: String,
+        start_time: u64,
+        end_time: u64,
     },
 }
 
@@ -54,6 +56,10 @@ pub struct CreateMsg {
     pub client: String,
     pub end_time: Option<u64>,
     pub cw20_whitelist: Option<Vec<String>>,
+    pub title: String,
+    pub url: String,
+    pub threshold: u64,
+    pub state: u8
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -102,23 +108,9 @@ pub struct ListResponse {
 pub struct DetailsResponse {
     /// id of this escrow
     pub id: String,
-    /// client can decide to approve or refund the escrow
     pub client: String,
-    /// if approved, funds go to the recipient
-    pub recipient: String,
-    /// if refunded, funds go to the source
-    pub source: String,
-    /// When end height set and block height exceeds this value, the escrow is expired.
-    /// Once an escrow is expired, it can be returned to the original funder (via "refund").
-    pub end_height: Option<u64>,
-    /// When end time (in seconds since epoch 00:00:00 UTC on 1 January 1970) is set and
-    /// block time exceeds this value, the escrow is expired.
-    /// Once an escrow is expired, it can be returned to the original funder (via "refund").
     pub end_time: Option<u64>,
-    /// Balance in native tokens
     pub native_balance: Vec<Coin>,
-    /// Balance in cw20 tokens
     pub cw20_balance: Vec<Cw20Coin>,
-    /// Whitelisted cw20 tokens
     pub cw20_whitelist: Vec<String>,
 }

@@ -16,8 +16,8 @@ pub struct GenericBalance {
 pub struct AccountInfo {
     pub addr: Addr,
     pub amount: u128,
-    pub start_time: Option<u64>,
-    pub end_time: Option<u64>
+    pub start_time: u64,
+    pub end_time: u64
 }
 
 impl GenericBalance {
@@ -75,11 +75,6 @@ pub struct Escrow {
 
 impl Escrow {
     pub fn is_expired(&self, env: &Env) -> bool {
-        if let Some(end_height) = self.end_height {
-            if env.block.height > end_height {
-                return true;
-            }
-        }
 
         if let Some(end_time) = self.end_time {
             if env.block.time > Timestamp::from_seconds(end_time) {
@@ -120,12 +115,14 @@ mod tests {
     fn dummy_escrow() -> Escrow {
         Escrow {
             client: Addr::unchecked("arb"),
-            recipient: Addr::unchecked("recip"),
-            source: Addr::unchecked("source"),
-            end_height: None,
             end_time: None,
             balance: Default::default(),
             cw20_whitelist: vec![],
+            title: String::from("title"),
+            url: String::from("url"),
+            accountinfo: vec![],
+            threshold: 10,
+            state: 0
         }
     }
 
