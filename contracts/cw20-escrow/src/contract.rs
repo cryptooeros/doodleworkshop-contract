@@ -10,7 +10,7 @@ use cw20::{Balance, Cw20Coin, Cw20CoinVerified, Cw20ExecuteMsg, Cw20ReceiveMsg};
 
 use crate::error::ContractError;
 use crate::msg::{
-    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, QueryMsg, ReceiveMsg,
+    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, QueryMsg, ReceiveMsg, ConstantMsg
 };
 use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS, CONSTANT};
 
@@ -27,12 +27,13 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     // no setup
+    
+    CONSTANT.save(deps.storage, "manager_addr", &String::from(""))?;
+    CONSTANT.save(deps.storage, "create_rate", &String::from("10"))?;
+    CONSTANT.save(deps.storage, "manager_rate", &String::from("10"))?;
+    CONSTANT.save(deps.storage, "token_address", &String::from(""))?;
+    CONSTANT.save(deps.storage, "contract_address", &String::from(""))?;
     Ok(Response::default())
-    CONSTANT.save(deps.storage, "manager_addr", "")?;
-    CONSTANT.save(deps.storage, "create_rate", "10")?;
-    CONSTANT.save(deps.storage, "manager_rate", "10")?;
-    CONSTANT.save(deps.storage, "token_address", "")?;
-    CONSTANT.save(deps.storage, "contract_address", "")?;
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -60,17 +61,20 @@ pub fn execute_setconstant(
     msg: ConstantMsg,
 ) -> Result<Response, ContractError> {
     
-    let manager_addr = CONSTANT.load(deps.storage, "manager_addr");
+    let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
 
-    if manager_addr != "" && info.sender != &api.addr_validate(manager_addr) {
+    if manager_addr.ne("") && info.sender != deps.api.addr_validate(&manager_addr)? {
         return Err(ContractError::Unauthorized {});
     }
     
-    CONSTANT.save(deps.storage, "manager_addr", msg.manager_addr)?;
-    CONSTANT.save(deps.storage, "create_rate", msg.create_rate)?;
-    CONSTANT.save(deps.storage, "manager_rate", msg.manager_rate)?;
-    CONSTANT.save(deps.storage, "token_address", msg.token_address)?;
-    CONSTANT.save(deps.storage, "contract_address", msg.contract_address)?;
+    CONSTANT.save(deps.storage, "manager_addr", &msg.manager_addr)?;
+    CONSTANT.save(deps.storage, "create_rate", &msg.create_rate)?;
+    CONSTANT.save(deps.storage, "manager_rate", &msg.manager_rate)?;
+    CONSTANT.save(deps.storage, "token_address", &msg.token_address)?;
+    CONSTANT.save(deps.storage, "contract_address", &msg.contract_address)?;
+
+    let res = Response::new().add_attributes(vec![("action", "setcontant")]);
+    Ok(res)
 }
 
 
@@ -89,7 +93,7 @@ pub fn execute_receive(
         ReceiveMsg::Create(msg) => {
             execute_create(deps, msg, balance, &api.addr_validate(&wrapper.sender)?)
         }
-        ReceiveMsg::TopUp { id } => execute_top_up(deps, id, balance),
+        ReceiveMsg::TopUp { id } => execute_top_up(deps, id, wrapper.start_time, msg.end_time, balance),
     }
 }
 
