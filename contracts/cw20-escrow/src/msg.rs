@@ -58,11 +58,11 @@ pub struct CreateMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConstantMsg {
-    manager_addr: String,
-    create_rate: String,
-    manager_rate: String,
-    token_address: String,
-    contract_address: String
+    pub manager_addr: String,
+    pub create_rate: String,
+    pub manager_rate: String,
+    pub token_address: String,
+    pub contract_address: String
 }
 
 impl CreateMsg {
