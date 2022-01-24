@@ -43,6 +43,7 @@ CreateEnv() {
     sudo apt-get install make build-essential gcc git jq chrony -y
     wget https://golang.org/dl/go1.17.3.linux-amd64.tar.gz
     sudo tar -C /usr/local -xzf go1.17.3.linux-amd64.tar.gz
+    rm -rf go1.17.3.linux-amd64.tar.gz
 
     export GOROOT=/usr/local/go
     export GOPATH=$HOME/go
@@ -57,6 +58,8 @@ CreateEnv() {
     git fetch
     git checkout v2.1.0
     make install
+
+    rm -rf juno
 
     junod keys import workshop workshop.key
 
@@ -139,7 +142,7 @@ GetContractAddress() {
     CODE_ID=$(cat $FILE_CODE_ID)
     CONTRACT_ADDR=$(junod query wasm list-contract-by-code $CODE_ID $NODECHAIN --output json | jq -r '.contracts[0]')
     
-    echo "Contract Address:"$CONTRACT_ADDR
+    echo "Contract Address : "$CONTRACT_ADDR
 
     #save to FILE_WORKSHOP_CONTRACT_ADDR
     echo $CONTRACT_ADDR > $FILE_WORKSHOP_CONTRACT_ADDR
