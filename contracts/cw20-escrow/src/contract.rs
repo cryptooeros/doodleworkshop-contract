@@ -29,10 +29,10 @@ pub fn instantiate(
     // no setup
     
     CONSTANT.save(deps.storage, "manager_addr", &String::from(""))?;
-    CONSTANT.save(deps.storage, "create_rate", &String::from("10"))?;
-    CONSTANT.save(deps.storage, "manager_rate", &String::from("10"))?;
-    CONSTANT.save(deps.storage, "token_address", &String::from(""))?;
-    CONSTANT.save(deps.storage, "contract_address", &String::from(""))?;
+    CONSTANT.save(deps.storage, "min_stake", &String::from("10"))?;
+    CONSTANT.save(deps.storage, "rate_client", &String::from("10"))?;
+    CONSTANT.save(deps.storage, "rate_manager", &String::from("10"))?;
+    CONSTANT.save(deps.storage, "devAddr", &String::from("juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"))?;
     Ok(Response::default())
 }
 
@@ -65,16 +65,17 @@ pub fn execute_setconstant(
 ) -> Result<Response, ContractError> {
     
     let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
-    let maddr:Addr = deps.api.addr_validate(&manager_addr)?;
 
-    if manager_addr.ne("") && info.sender != maddr {
-        return Err(ContractError::Unauthorized {});
+    if manager_addr.ne("") {
+        let maddr:Addr = deps.api.addr_validate(&manager_addr)?;
+        if info.sender != maddr {
+            return Err(ContractError::Unauthorized {});
+        }
     }
     CONSTANT.save(deps.storage, "manager_addr", &msg.manager_addr)?;
-    CONSTANT.save(deps.storage, "create_rate", &msg.create_rate)?;
-    CONSTANT.save(deps.storage, "manager_rate", &msg.manager_rate)?;
-    CONSTANT.save(deps.storage, "token_address", &msg.token_address)?;
-    CONSTANT.save(deps.storage, "contract_address", &msg.contract_address)?;
+    CONSTANT.save(deps.storage, "min_stake", &msg.min_stake)?;
+    CONSTANT.save(deps.storage, "rate_client", &msg.rate_client)?;
+    CONSTANT.save(deps.storage, "rate_manager", &msg.rate_manager)?;
 
     let res = Response::new().add_attributes(vec![("action", "setcontant")]);
     Ok(res)
@@ -114,7 +115,7 @@ pub fn execute_create(
 
     let mut cw20_whitelist = msg.addr_whitelist(deps.api)?;
 
-    let token_address = CONSTANT.load(deps.storage, "token_address")?;
+    let rate_manager = CONSTANT.load(deps.storage, "rate_manager")?;
     let escrow_balance = match balance {
         Balance::Native(balance) => GenericBalance {
             native: balance.0,
@@ -122,7 +123,7 @@ pub fn execute_create(
         },
         Balance::Cw20(token) => {
             // make sure the token sent is on the whitelist by default
-            if &token.address != &token_address {
+            if &token.address != &rate_manager {
                 return Err(ContractError::Unauthorized {})
             }
 
@@ -299,6 +300,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List {} => to_binary(&query_list(deps)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
+        QueryMsg::Constants {} => to_binary(&query_constants(deps)?),
     }
 }
 
@@ -336,6 +338,15 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
 fn query_list(deps: Deps) -> StdResult<ListResponse> {
     Ok(ListResponse {
         escrows: all_escrow_ids(deps.storage)?,
+    })
+}
+
+fn query_constants(deps: Deps) -> StdResult<ConstantMsg> {
+    Ok(ConstantMsg {
+        manager_addr: CONSTANT.load(deps.storage, "manager_addr")?,
+        min_stake: CONSTANT.load(deps.storage, "min_stake")?,
+        rate_client: CONSTANT.load(deps.storage, "rate_client")?,
+        rate_manager: CONSTANT.load(deps.storage, "rate_manager")?,
     })
 }
 

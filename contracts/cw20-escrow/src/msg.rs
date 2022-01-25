@@ -66,10 +66,9 @@ pub struct CreateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ConstantMsg {
     pub manager_addr: String,
-    pub create_rate: String,
-    pub manager_rate: String,
-    pub token_address: String,
-    pub contract_address: String
+    pub min_stake: String,
+    pub rate_client: String,
+    pub rate_manager: String,
 }
 
 impl CreateMsg {
@@ -97,6 +96,7 @@ pub enum QueryMsg {
     /// Returns the details of the named escrow, error if not created
     /// Return type: DetailsResponse.
     Details { id: String },
+    Constants {}
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -115,3 +115,4 @@ pub struct DetailsResponse {
     pub cw20_balance: Vec<Cw20Coin>,
     pub cw20_whitelist: Vec<String>,
 }
+

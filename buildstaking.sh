@@ -5,7 +5,7 @@ PARAM=$1
 ####################################    Constants    ##################################################
 
 #depends on mainnet or testnet
-#NODE="--node https://rpc.juno.omniflix.co:443"
+#NODE="--node https://rpc.junomint.com:443"
 #CHAIN_ID=juno-1
 #DENOM="ujuno"
 #CONTRACT_CREW="juno18cpnn3cnrr9xq7r0cqp7shl7slasf27nrmskw4rrw8c6hyp8u7rqe2nulg"
@@ -189,6 +189,16 @@ PrintDetailsQuery() {
     junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details":{"id":"'$ADDR_ACHILLES'"}}' $NODECHAIN
 }
 
+#Print Constants
+PrintConstants() {
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"constants":{}}' $NODECHAIN
+}
+
+###################################################################################################
+###################################################################################################
+###################################################################################################
+###################################################################################################
 #Create Test Escrow
 CreateEscrow() {
     CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
@@ -217,6 +227,11 @@ Refund() {
 }
 
 
+SetConstant() {
+    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"set_constant":{"manager_addr":"'$ADDR_WORKSHOP'", "min_stake":"10", "rate_client":"20", "rate_manager":"20"}}' $WALLET $TXFLAG
+}
+
 
 #################################### End of Function ###################################################
 if [[ $PARAM == "" ]]; then
@@ -228,6 +243,8 @@ sleep 5
     Instantiate
 sleep 5
     GetContractAddress
+sleep 5
+    SetConstant
 #sleep 5
 #    CreateEscrow
 # sleep 5
