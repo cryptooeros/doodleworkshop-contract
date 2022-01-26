@@ -10,7 +10,7 @@ use cw20::{Balance, Cw20Coin, Cw20CoinVerified, Cw20ExecuteMsg, Cw20ReceiveMsg};
 
 use crate::error::ContractError;
 use crate::msg::{
-    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, QueryMsg, ReceiveMsg, ConstantMsg
+    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, IsAdminResponse, QueryMsg, ReceiveMsg, ConstantMsg
 };
 use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS, CONSTANT, AccountInfo};
 
@@ -32,7 +32,6 @@ pub fn instantiate(
     CONSTANT.save(deps.storage, "min_stake", &String::from("10"))?;
     CONSTANT.save(deps.storage, "rate_client", &String::from("10"))?;
     CONSTANT.save(deps.storage, "rate_manager", &String::from("10"))?;
-    CONSTANT.save(deps.storage, "devAddr", &String::from("juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"))?;
     Ok(Response::default())
 }
 
@@ -65,9 +64,9 @@ pub fn execute_setconstant(
 ) -> Result<Response, ContractError> {
     
     let manager_addr:String = CONSTANT.load(deps.storage, "manager_addr")?;
-
+    let maddr:Addr;
     if manager_addr.ne("") {
-        let maddr:Addr = deps.api.addr_validate(&manager_addr)?;
+        maddr = deps.api.addr_validate(&manager_addr)?;
         if info.sender != maddr {
             return Err(ContractError::Unauthorized {});
         }
@@ -115,17 +114,12 @@ pub fn execute_create(
 
     let mut cw20_whitelist = msg.addr_whitelist(deps.api)?;
 
-    let rate_manager = CONSTANT.load(deps.storage, "rate_manager")?;
     let escrow_balance = match balance {
         Balance::Native(balance) => GenericBalance {
             native: balance.0,
             cw20: vec![],
         },
         Balance::Cw20(token) => {
-            // make sure the token sent is on the whitelist by default
-            if &token.address != &rate_manager {
-                return Err(ContractError::Unauthorized {})
-            }
 
             if !cw20_whitelist.iter().any(|t| t == &token.address) {
                 cw20_whitelist.push(token.address.clone())
@@ -141,12 +135,14 @@ pub fn execute_create(
         //client: deps.api.addr_validate(&msg.client)?,
         client: sender.clone(),
         accountinfo: vec![],
-        end_time: msg.end_time,
+        work_title: msg.work_title,
+        work_desc: msg.work_desc,
+        work_url: msg.work_url,
+        start_time: msg.start_time,
+        account_min_stake_amount: msg.account_min_stake_amount,
+        stake_amount: msg.stake_amount,
         balance: escrow_balance,
         cw20_whitelist,
-        title: msg.title,
-        url: msg.url,
-        threshold: msg.threshold,
         state: 0 // created state
     };
 
@@ -301,6 +297,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::List {} => to_binary(&query_list(deps)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
         QueryMsg::Constants {} => to_binary(&query_constants(deps)?),
+        QueryMsg::IsAdmin {addr} => to_binary(&query_isadmin(deps, addr)?),
     }
 }
 
@@ -327,7 +324,12 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
     let details = DetailsResponse {
         id,
         client: escrow.client.into(),
-        end_time: escrow.end_time,
+        work_title: escrow.work_title,
+        work_desc: escrow.work_desc,
+        work_url: escrow.work_url,
+        start_time: escrow.start_time,
+        account_min_stake_amount: escrow.account_min_stake_amount,
+        stake_amount: escrow.stake_amount,
         native_balance,
         cw20_balance: cw20_balance?,
         cw20_whitelist,
@@ -347,6 +349,13 @@ fn query_constants(deps: Deps) -> StdResult<ConstantMsg> {
         min_stake: CONSTANT.load(deps.storage, "min_stake")?,
         rate_client: CONSTANT.load(deps.storage, "rate_client")?,
         rate_manager: CONSTANT.load(deps.storage, "rate_manager")?,
+    })
+}
+
+fn query_isadmin(deps: Deps, addr: String) -> StdResult<IsAdminResponse> {
+
+    Ok(IsAdminResponse {
+        isadmin: CONSTANT.load(deps.storage, "manager_addr")? == addr,
     })
 }
 
@@ -372,12 +381,13 @@ mod tests {
         let create = CreateMsg {
             id: "foobar".to_string(),
             client: String::from("arbitrate"),
-            end_time: Some(123456),
+            start_time: Some(123456),
             cw20_whitelist: Some(vec![String::from("other-token")]),
-            title: String::from("title"),
-            url: String::from("url"),
-            threshold: 100,
-            state: 0
+            work_title: String::from("title"),
+            work_url: String::from("url"),
+            work_desc: String::from("desc"),
+            account_min_stake_amount: 10,
+            stake_amount: 100,
         };
         let receive = Cw20ReceiveMsg {
             sender: String::from("source"),
@@ -398,7 +408,12 @@ mod tests {
             DetailsResponse {
                 id: "foobar".to_string(),
                 client: String::from("arbitrate"),
-                end_time: Some(123456),
+                start_time: Some(123456),
+                work_title: String::from("title"),
+                work_url: String::from("url"),
+                work_desc: String::from("desc"),
+                account_min_stake_amount: 10,
+                stake_amount: 100,
                 native_balance: vec![],
                 cw20_balance: vec![Cw20Coin {
                     address: String::from("my-cw20-token"),
@@ -494,12 +509,13 @@ mod tests {
         let create = CreateMsg {
             id: "foobar".to_string(),
             client: String::from("arbitrate"),
-            end_time: None,
+            start_time: None,
             cw20_whitelist: Some(whitelist),
-            title: String::from("title"),
-            url: String::from("url"),
-            threshold: 10,
-            state: 0,
+            work_title: String::from("title"),
+            work_url: String::from("url"),
+            work_desc: String::from("desc"),
+            account_min_stake_amount: 10,
+            stake_amount: 100,
         };
         let sender = String::from("source");
         let balance = vec![coin(100, "fee"), coin(200, "stake")];

@@ -55,12 +55,13 @@ pub struct CreateMsg {
     /// 3-20 bytes of utf-8 text
     pub id: String,
     pub client: String,
-    pub end_time: Option<u64>,
     pub cw20_whitelist: Option<Vec<String>>,
-    pub title: String,
-    pub url: String,
-    pub threshold: u64,
-    pub state: u8
+    pub work_title: String,
+    pub work_desc: String,
+    pub work_url: String,
+    pub start_time: Option<u64>,
+    pub account_min_stake_amount : u64,
+    pub stake_amount: u64
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -96,7 +97,8 @@ pub enum QueryMsg {
     /// Returns the details of the named escrow, error if not created
     /// Return type: DetailsResponse.
     Details { id: String },
-    Constants {}
+    Constants {},
+    IsAdmin { addr: String},
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -110,9 +112,21 @@ pub struct DetailsResponse {
     /// id of this escrow
     pub id: String,
     pub client: String,
-    pub end_time: Option<u64>,
+    pub work_title: String,
+    pub work_desc: String,
+    pub work_url: String,
+    pub start_time: Option<u64>,
+    pub account_min_stake_amount: u64,
+    pub stake_amount: u64,
     pub native_balance: Vec<Coin>,
     pub cw20_balance: Vec<Cw20Coin>,
     pub cw20_whitelist: Vec<String>,
+   
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct IsAdminResponse {
+    /// id of this escrow
+    pub isadmin: bool,
 }
 

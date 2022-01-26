@@ -61,23 +61,24 @@ pub struct Escrow {
     pub client: Addr,
     /// if approved, funds go to the recipient
     pub accountinfo: Vec<AccountInfo>,
-    /// if refunded, funds go to the source
-    pub end_time: Option<u64>,
+    pub work_title: String,
+    pub work_desc: String,
+    pub work_url: String,
+    pub start_time: Option<u64>,
+    pub account_min_stake_amount: u64,
+    pub stake_amount: u64,
     /// Balance in Native and Cw20 tokens
     pub balance: GenericBalance,
     /// All possible contracts that we accept tokens from
     pub cw20_whitelist: Vec<Addr>,
-    pub title: String,
-    pub url: String,
-    pub threshold: u64,
     pub state: u8
 }
 
 impl Escrow {
     pub fn is_expired(&self, env: &Env) -> bool {
 
-        if let Some(end_time) = self.end_time {
-            if env.block.time > Timestamp::from_seconds(end_time) {
+        if let Some(start_time) = self.start_time {
+            if env.block.time > Timestamp::from_seconds(start_time) {
                 return true;
             }
         }
@@ -115,13 +116,15 @@ mod tests {
     fn dummy_escrow() -> Escrow {
         Escrow {
             client: Addr::unchecked("arb"),
-            end_time: None,
+            start_time: None,
             balance: Default::default(),
             cw20_whitelist: vec![],
-            title: String::from("title"),
-            url: String::from("url"),
+            work_title: String::from("title"),
+            work_url: String::from("url"),
+            work_desc: String::from("desc"),
             accountinfo: vec![],
-            threshold: 10,
+            account_min_stake_amount: 10,
+            stake_amount: 10,
             state: 0
         }
     }
