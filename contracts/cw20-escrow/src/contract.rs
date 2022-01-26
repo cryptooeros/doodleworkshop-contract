@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, SubMsg, WasmMsg,
+    StdResult, SubMsg, WasmMsg, Order
 };
 
 use cw2::set_contract_version;
@@ -10,7 +10,7 @@ use cw20::{Balance, Cw20Coin, Cw20CoinVerified, Cw20ExecuteMsg, Cw20ReceiveMsg};
 
 use crate::error::ContractError;
 use crate::msg::{
-    CreateMsg, DetailsResponse, ExecuteMsg, InstantiateMsg, ListResponse, IsAdminResponse, QueryMsg, ReceiveMsg, ConstantMsg
+    CreateMsg, DetailsResponse, DetailsAllResponse, ExecuteMsg, InstantiateMsg, ListResponse, IsAdminResponse, QueryMsg, ReceiveMsg, ConstantMsg
 };
 use crate::state::{all_escrow_ids, Escrow, GenericBalance, ESCROWS, CONSTANT, AccountInfo};
 
@@ -134,7 +134,7 @@ pub fn execute_create(
     let escrow = Escrow {
         //client: deps.api.addr_validate(&msg.client)?,
         client: sender.clone(),
-        accountinfo: vec![],
+        account_info: vec![],
         work_title: msg.work_title,
         work_desc: msg.work_desc,
         work_url: msg.work_url,
@@ -187,7 +187,7 @@ pub fn execute_top_up(
         end_time: end_time
     };
 
-    escrow.accountinfo.push(accountinfo);
+    escrow.account_info.push(accountinfo);
     escrow.balance.add_tokens(balance);
 
     // and save
@@ -295,6 +295,7 @@ fn send_tokens(to: &Addr, balance: &GenericBalance) -> StdResult<Vec<SubMsg>> {
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List {} => to_binary(&query_list(deps)?),
+        QueryMsg::DetailsAll {} => to_binary(&query_detailsall(deps)?),
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
         QueryMsg::Constants {} => to_binary(&query_constants(deps)?),
         QueryMsg::IsAdmin {addr} => to_binary(&query_isadmin(deps, addr)?),
@@ -330,9 +331,9 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
         start_time: escrow.start_time,
         account_min_stake_amount: escrow.account_min_stake_amount,
         stake_amount: escrow.stake_amount,
-        native_balance,
         cw20_balance: cw20_balance?,
-        cw20_whitelist,
+        account_info: escrow.account_info,
+        state: escrow.state
     };
     Ok(details)
 }
@@ -340,6 +341,46 @@ fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
 fn query_list(deps: Deps) -> StdResult<ListResponse> {
     Ok(ListResponse {
         escrows: all_escrow_ids(deps.storage)?,
+    })
+}
+
+fn query_detailsall(deps: Deps) -> StdResult<DetailsAllResponse> {
+    let ids:Vec<String> = all_escrow_ids(deps.storage)?;
+    let mut ret:Vec<DetailsResponse> = vec![];
+
+    for idstr in ids {
+        let escrow = ESCROWS.load(deps.storage, idstr.as_str())?;
+
+        let cw20_balance: StdResult<Vec<_>> = escrow
+            .balance
+            .cw20
+            .into_iter()
+            .map(|token| {
+                Ok(Cw20Coin {
+                    address: token.address.into(),
+                    amount: token.amount,
+                })
+            })
+            .collect();
+        
+        let details = DetailsResponse {
+            id: idstr,
+            client: escrow.client.into(),
+            work_title: escrow.work_title,
+            work_desc: escrow.work_desc,
+            work_url: escrow.work_url,
+            start_time: escrow.start_time,
+            account_min_stake_amount: escrow.account_min_stake_amount,
+            stake_amount: escrow.stake_amount,
+            cw20_balance: cw20_balance?,
+            account_info: escrow.account_info,
+            state: escrow.state
+        };
+        ret.push(details);
+    }
+    
+    Ok(DetailsAllResponse {
+        escrows: ret
     })
 }
 
@@ -354,8 +395,11 @@ fn query_constants(deps: Deps) -> StdResult<ConstantMsg> {
 
 fn query_isadmin(deps: Deps, addr: String) -> StdResult<IsAdminResponse> {
 
+    let manager_addr:String  = CONSTANT.load(deps.storage, "manager_addr")?;
+
+
     Ok(IsAdminResponse {
-        isadmin: CONSTANT.load(deps.storage, "manager_addr")? == addr,
+        isadmin: manager_addr == "" || manager_addr == addr,
     })
 }
 
@@ -414,12 +458,12 @@ mod tests {
                 work_desc: String::from("desc"),
                 account_min_stake_amount: 10,
                 stake_amount: 100,
-                native_balance: vec![],
                 cw20_balance: vec![Cw20Coin {
                     address: String::from("my-cw20-token"),
                     amount: Uint128::new(100),
                 }],
-                cw20_whitelist: vec![String::from("other-token"), String::from("my-cw20-token")],
+                account_info: vec![],
+                state: 0
             }
         );
 

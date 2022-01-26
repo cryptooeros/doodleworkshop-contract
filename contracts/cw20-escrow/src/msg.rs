@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Api, Coin, StdResult};
-
+use crate::state::{AccountInfo};
 use cw20::{Cw20Coin, Cw20ReceiveMsg};
 
 #[derive(Serialize, Deserialize, JsonSchema)]
@@ -94,6 +94,7 @@ pub fn is_valid_name(name: &str) -> bool {
 pub enum QueryMsg {
     /// Show all open escrows. Return type is ListResponse.
     List {},
+    DetailsAll {},
     /// Returns the details of the named escrow, error if not created
     /// Return type: DetailsResponse.
     Details { id: String },
@@ -107,6 +108,13 @@ pub struct ListResponse {
     pub escrows: Vec<String>,
 }
 
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct DetailsAllResponse {
+    /// list all registered ids
+    pub escrows: Vec<DetailsResponse>,
+}
+
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct DetailsResponse {
     /// id of this escrow
@@ -118,9 +126,9 @@ pub struct DetailsResponse {
     pub start_time: Option<u64>,
     pub account_min_stake_amount: u64,
     pub stake_amount: u64,
-    pub native_balance: Vec<Coin>,
     pub cw20_balance: Vec<Cw20Coin>,
-    pub cw20_whitelist: Vec<String>,
+    pub account_info: Vec<AccountInfo>,
+    pub state: u8
    
 }
 

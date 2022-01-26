@@ -60,7 +60,7 @@ pub struct Escrow {
     /// client can decide to approve or refund the escrow
     pub client: Addr,
     /// if approved, funds go to the recipient
-    pub accountinfo: Vec<AccountInfo>,
+    pub account_info: Vec<AccountInfo>,
     pub work_title: String,
     pub work_desc: String,
     pub work_url: String,
@@ -82,7 +82,6 @@ impl Escrow {
                 return true;
             }
         }
-
         false
     }
 
