@@ -229,7 +229,7 @@ Refund() {
 
 SetConstant() {
     CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"set_constant":{"manager_addr":"'$ADDR_WORKSHOP'", "min_stake":"0.01", "rate_client":"20", "rate_manager":"20"}}' $WALLET $TXFLAG
+    junod tx wasm execute $CONTRACT_WORKSHOP '{"set_constant":{"manager_addr":"'$ADDR_WORKSHOP'", "min_stake":"0.01", "rate_client":"10", "rate_manager":"10"}}' $WALLET $TXFLAG
 }
 
 

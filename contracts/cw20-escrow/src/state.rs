@@ -74,6 +74,40 @@ impl GenericBalance {
             }
         };
     }
+
+    pub fn sub_tokens(&mut self, sub: Balance) {
+        match sub {
+            Balance::Native(balance) => {
+                for token in balance.0 {
+                    let index = self.native.iter().enumerate().find_map(|(i, exist)| {
+                        if exist.denom == token.denom {
+                            Some(i)
+                        } else {
+                            None
+                        }
+                    });
+                    match index {
+                        Some(idx) => self.native[idx].amount -= token.amount,
+                        None => self.native.push(token),
+                    }
+                }
+            }
+            Balance::Cw20(token) => {
+                let index = self.cw20.iter().enumerate().find_map(|(i, exist)| {
+                    if exist.address == token.address {
+                        Some(i)
+                    } else {
+                        None
+                    }
+                });
+                match index {
+                    Some(idx) => self.cw20[idx].amount -= token.amount,
+                    None => self.cw20.push(token),
+                }
+            }
+        };
+    }
+
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -81,7 +115,8 @@ pub struct Escrow {
     /// client can decide to approve or refund the escrow
     pub client: Addr,
     /// if approved, funds go to the recipient
-    pub account_info: GenericAccount,
+    // pub account_info: GenericAccount,
+    pub account_info: String,
     pub work_title: String,
     pub work_desc: String,
     pub work_url: String,
@@ -142,7 +177,8 @@ mod tests {
             work_title: String::from("title"),
             work_url: String::from("url"),
             work_desc: String::from("desc"),
-            account_info: GenericAccount{account:vec![]},
+            // account_info: GenericAccount{account:vec![]},
+            account_info: String::from(""),
             account_min_stake_amount: 10,
             stake_amount: 10,
             state: 0

@@ -9,11 +9,43 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Work is not started yet")]
+    NotStarted {},
+
+    #[error("You are not creator")]
+    NotClient {},
+
+    #[error("You are not manager")]
+    NotManager {},
+
+    #[error("No rewards left")]
+    NotLeft {},
+
+    #[error("Did not got all rewards")]
+    NotFinished {},
+
+    #[error("Work is already started")]
+    AlreadyStarted {},
+
+    #[error("Work is not expired yet")]
+    WorkNotExpired {},
+
+    #[error("No accounts staked")]
+    NobodyStaked {},
+
+    #[error("You did not stake")]
+    DidntStaked {},
+
     #[error("Only accepts tokens in the cw20_whitelist")]
     NotInWhitelist {},
 
-    #[error("Escrow is expired")]
+    #[error("Work is expired")]
     Expired {},
+
+    
+
+    #[error("Still in your staking expired")]
+    AccountNotExpired {},
 
     #[error("Send some coins to create an escrow")]
     EmptyBalance {},

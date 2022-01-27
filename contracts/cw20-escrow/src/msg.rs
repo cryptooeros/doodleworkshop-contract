@@ -26,6 +26,9 @@ pub enum ExecuteMsg {
         /// id is a human-readable name for the escrow from create
         id: String,
     },
+    Remove {
+        id: String,
+    },
     /// This accepts a properly-encoded ReceiveMsg from a cw20 contract
     Receive(Cw20ReceiveMsg),
     /// Set Constant
@@ -127,7 +130,8 @@ pub struct DetailsResponse {
     pub account_min_stake_amount: u64,
     pub stake_amount: u64,
     pub cw20_balance: Vec<Cw20Coin>,
-    pub account_info: Vec<AccountInfo>,
+    // pub account_info: Vec<AccountInfo>,
+    pub account_info: String,
     pub state: u8
    
 }

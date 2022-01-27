@@ -87,10 +87,14 @@ fn escrow_happy_path_cw20_tokens() {
     let create_msg = ReceiveMsg::Create(CreateMsg {
         id: id.clone(),
         client: arb.to_string(),
-        recipient: ben.clone(),
-        end_height: None,
-        end_time: None,
+        start_time: None,
         cw20_whitelist: None,
+
+        work_title: String::from("title"),
+        work_url: String::from("url"),
+        work_desc: String::from("desc"),
+        account_min_stake_amount: 10,
+        stake_amount: 100,
     });
     let send_msg = Cw20ExecuteMsg::Send {
         contract: escrow_addr.to_string(),
@@ -126,7 +130,6 @@ fn escrow_happy_path_cw20_tokens() {
         .unwrap();
     assert_eq!(id, details.id);
     assert_eq!(arb, details.client);
-    assert_eq!(ben, details.recipient);
     assert_eq!(
         vec![Cw20Coin {
             address: cash_addr.to_string(),
