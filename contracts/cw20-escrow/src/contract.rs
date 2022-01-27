@@ -202,7 +202,7 @@ pub fn execute_top_up(
     // escrow.account_info.add_account(account_info);
     escrow.balance.add_tokens(balance);
     
-    if (escrow.balance.cw20.get(0).unwrap().amount >= Uint128::from(escrow.stake_amount) && escrow.is_expired(&env)) {
+    if escrow.balance.cw20.get(0).unwrap().amount >= Uint128::from(escrow.stake_amount) /*&& escrow.is_expired(&env)*/ {
         escrow.state = 1; //set to started state
     }
     // and save
@@ -279,6 +279,20 @@ pub fn execute_approve (
     }
 }
 
+pub fn accountStaked(deps:Deps, account_info:&String, addr:Addr) -> u128 {
+    let accounts: Vec<&str> = account_info.split(';').collect();
+    let mut exist:bool = false;
+
+    for account in accounts {
+        let infos:Vec<&str> = account.split(':').collect();
+        
+        if infos.len() != 4 || deps.api.addr_validate(&infos[0]).unwrap() != addr {
+            continue;
+        }
+        return infos[1].parse().unwrap();
+    }
+    0u128
+}
 
 pub fn execute_refund(
     deps: DepsMut,
@@ -414,50 +428,13 @@ fn send_tokens(to: &Addr, balance: &GenericBalance) -> StdResult<Vec<SubMsg>> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::List {} => to_binary(&query_list(deps)?),
-        QueryMsg::DetailsAll {} => to_binary(&query_detailsall(deps)?),
-        QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
-        QueryMsg::Constants {} => to_binary(&query_constants(deps)?),
+        QueryMsg::DetailsAll {addr} => to_binary(&query_detailsall(deps, env, addr)?),
+        QueryMsg::Constants {addr} => to_binary(&query_constants(deps, addr)?),
         QueryMsg::IsAdmin {addr} => to_binary(&query_isadmin(deps, addr)?),
     }
-}
-
-fn query_details(deps: Deps, id: String) -> StdResult<DetailsResponse> {
-    let escrow = ESCROWS.load(deps.storage, &id)?;
-
-    let cw20_whitelist = escrow.human_whitelist();
-
-    // transform tokens
-    let native_balance = escrow.balance.native;
-
-    let cw20_balance: StdResult<Vec<_>> = escrow
-        .balance
-        .cw20
-        .into_iter()
-        .map(|token| {
-            Ok(Cw20Coin {
-                address: token.address.into(),
-                amount: token.amount,
-            })
-        })
-        .collect();
-
-    let details = DetailsResponse {
-        id,
-        client: escrow.client.into(),
-        work_title: escrow.work_title,
-        work_desc: escrow.work_desc,
-        work_url: escrow.work_url,
-        start_time: escrow.start_time,
-        account_min_stake_amount: escrow.account_min_stake_amount,
-        stake_amount: escrow.stake_amount,
-        cw20_balance: cw20_balance?,
-        account_info: escrow.account_info,
-        state: escrow.state
-    };
-    Ok(details)
 }
 
 fn query_list(deps: Deps) -> StdResult<ListResponse> {
@@ -466,13 +443,16 @@ fn query_list(deps: Deps) -> StdResult<ListResponse> {
     })
 }
 
-fn query_detailsall(deps: Deps) -> StdResult<DetailsAllResponse> {
+fn query_detailsall(deps: Deps, env: Env, addr:String) -> StdResult<DetailsAllResponse> {
     let ids:Vec<String> = all_escrow_ids(deps.storage)?;
+
+    let isadmin:bool = CONSTANT.load(deps.storage, "manager_addr")? == addr || CONSTANT.load(deps.storage, "manager_addr")? == "";
+
     let mut ret:Vec<DetailsResponse> = vec![];
 
     for idstr in ids {
         let escrow = ESCROWS.load(deps.storage, idstr.as_str())?;
-
+        let expired:bool = escrow.is_expired(&env);
         let cw20_balance: StdResult<Vec<_>> = escrow
             .balance
             .cw20
@@ -485,18 +465,36 @@ fn query_detailsall(deps: Deps) -> StdResult<DetailsAllResponse> {
             })
             .collect();
         
+        let mut accountinfo:String = String::from(escrow.account_info);
+        let my_staked:u128 = accountStaked(deps, &accountinfo, deps.api.addr_validate(&addr)?);
+        
+        if !isadmin {
+            accountinfo = String::from("");
+        }
+
+        let mut workurl = String::from("");
+        if isadmin || escrow.state > 0 && my_staked > 0u128 && expired || escrow.client == addr {
+            workurl = escrow.work_url;
+        }
+        let mut cw20balance = vec![];
+        if isadmin {
+            cw20balance = cw20_balance?;
+        }
+        
         let details = DetailsResponse {
             id: idstr,
             client: escrow.client.into(),
             work_title: escrow.work_title,
             work_desc: escrow.work_desc,
-            work_url: escrow.work_url,
+            work_url: workurl,
             start_time: escrow.start_time,
             account_min_stake_amount: escrow.account_min_stake_amount,
             stake_amount: escrow.stake_amount,
-            cw20_balance: cw20_balance?,
-            account_info: escrow.account_info,
-            state: escrow.state
+            cw20_balance: cw20balance,
+            account_info: accountinfo,
+            state: escrow.state,
+            my_staked: my_staked,
+            expired: expired
         };
         ret.push(details);
     }
@@ -506,19 +504,29 @@ fn query_detailsall(deps: Deps) -> StdResult<DetailsAllResponse> {
     })
 }
 
-fn query_constants(deps: Deps) -> StdResult<ConstantMsg> {
-    Ok(ConstantMsg {
-        manager_addr: CONSTANT.load(deps.storage, "manager_addr")?,
-        min_stake: CONSTANT.load(deps.storage, "min_stake")?,
-        rate_client: CONSTANT.load(deps.storage, "rate_client")?,
-        rate_manager: CONSTANT.load(deps.storage, "rate_manager")?,
-    })
+fn query_constants(deps: Deps, addr:String) -> StdResult<ConstantMsg> {
+
+    let isadmin:bool = (CONSTANT.load(deps.storage, "manager_addr")? == addr || CONSTANT.load(deps.storage, "manager_addr")? == "");
+    if isadmin {
+        Ok(ConstantMsg {
+            manager_addr: CONSTANT.load(deps.storage, "manager_addr")?,
+            min_stake: CONSTANT.load(deps.storage, "min_stake")?,
+            rate_client: CONSTANT.load(deps.storage, "rate_client")?,
+            rate_manager: CONSTANT.load(deps.storage, "rate_manager")?,
+        })
+    } else {
+        Ok(ConstantMsg {
+            manager_addr: String::from(""),
+            min_stake: String::from(""),
+            rate_client: String::from(""),
+            rate_manager: String::from(""),
+        })
+    }
 }
 
 fn query_isadmin(deps: Deps, addr: String) -> StdResult<IsAdminResponse> {
 
     let manager_addr:String  = CONSTANT.load(deps.storage, "manager_addr")?;
-
 
     Ok(IsAdminResponse {
         isadmin: manager_addr == "" || manager_addr == addr,
@@ -554,6 +562,7 @@ mod tests {
             work_desc: String::from("desc"),
             account_min_stake_amount: 10,
             stake_amount: 100,
+            expired: false
         };
         let receive = Cw20ReceiveMsg {
             sender: String::from("source"),
@@ -568,7 +577,7 @@ mod tests {
         assert_eq!(("action", "create"), res.attributes[0]);
 
         // ensure the whitelist is what we expect
-        let details = query_details(deps.as_ref(), "foobar".to_string()).unwrap();
+        let details = query_constant(deps.as_ref(), "foobar".to_string()).unwrap();
         assert_eq!(
             details,
             DetailsResponse {
@@ -585,7 +594,9 @@ mod tests {
                     amount: Uint128::new(100),
                 }],
                 account_info: String::from(""),
-                state: 0
+                state: 0,
+                my_staked: 0u128,
+                expired: false
             }
         );
 

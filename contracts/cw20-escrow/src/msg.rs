@@ -97,11 +97,9 @@ pub fn is_valid_name(name: &str) -> bool {
 pub enum QueryMsg {
     /// Show all open escrows. Return type is ListResponse.
     List {},
-    DetailsAll {},
-    /// Returns the details of the named escrow, error if not created
-    /// Return type: DetailsResponse.
-    Details { id: String },
-    Constants {},
+    // Details { id: String },
+    DetailsAll {addr: String},
+    Constants {addr: String},
     IsAdmin { addr: String},
 }
 
@@ -132,7 +130,9 @@ pub struct DetailsResponse {
     pub cw20_balance: Vec<Cw20Coin>,
     // pub account_info: Vec<AccountInfo>,
     pub account_info: String,
-    pub state: u8
+    pub state: u8,
+    pub my_staked: u128,
+    pub expired: bool
    
 }
 
