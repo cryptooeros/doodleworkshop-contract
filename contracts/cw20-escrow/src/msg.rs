@@ -13,11 +13,7 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     Create(CreateMsg),
     /// Adds all sent native tokens to the contract
-    TopUp {
-        id: String,
-        start_time: u64,
-        end_time: u64,
-    },
+    TopUp(TopUpMsg),
     /// Approve sends all tokens to the recipient.
     /// Only the client can do this
     Approve {
@@ -42,11 +38,7 @@ pub enum ExecuteMsg {
 pub enum ReceiveMsg {
     Create(CreateMsg),
     /// Adds all sent native tokens to the contract
-    TopUp {
-        id: String,
-        start_time: u64,
-        end_time: u64,
-    },
+    TopUp(TopUpMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -62,6 +54,14 @@ pub struct CreateMsg {
     pub start_time: Option<u64>,
     pub account_min_stake_amount : u64,
     pub stake_amount: u64
+}
+
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct TopUpMsg {
+    pub id: String,
+    pub start_time: u64,
+    pub end_time: u64
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

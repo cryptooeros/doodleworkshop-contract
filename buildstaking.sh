@@ -241,7 +241,7 @@ sleep 5
     GetCode
 sleep 5
     Instantiate
-sleep 5
+sleep 8
     GetContractAddress
 sleep 5
     SetConstant

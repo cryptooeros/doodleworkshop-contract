@@ -12,6 +12,11 @@ pub struct GenericBalance {
     pub cw20: Vec<Cw20CoinVerified>,
 }
 
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
+pub struct GenericAccount {
+    pub account: Vec<AccountInfo>
+}
+
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct AccountInfo {
     pub addr: Addr,
@@ -19,6 +24,22 @@ pub struct AccountInfo {
     pub start_time: u64,
     pub end_time: u64
 }
+impl GenericAccount {
+    pub fn add_account(&mut self, add: AccountInfo) {
+        let index = self.account.iter().enumerate().find_map(|(i, exist)| {
+            if exist.addr == add.addr {
+                None
+            } else {
+                Some(i)
+            }
+        });
+        match index {
+            Some(idx) => self.account[idx].amount += add.amount,
+            None => self.account.push(add),
+        };
+    }
+}
+
 
 impl GenericBalance {
     pub fn add_tokens(&mut self, add: Balance) {
@@ -60,7 +81,7 @@ pub struct Escrow {
     /// client can decide to approve or refund the escrow
     pub client: Addr,
     /// if approved, funds go to the recipient
-    pub account_info: Vec<AccountInfo>,
+    pub account_info: GenericAccount,
     pub work_title: String,
     pub work_desc: String,
     pub work_url: String,
@@ -121,7 +142,7 @@ mod tests {
             work_title: String::from("title"),
             work_url: String::from("url"),
             work_desc: String::from("desc"),
-            accountinfo: vec![],
+            account_info: GenericAccount{account:vec![]},
             account_min_stake_amount: 10,
             stake_amount: 10,
             state: 0
