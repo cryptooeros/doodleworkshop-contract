@@ -284,9 +284,8 @@ pub fn execute_approve (
     }
 }
 
-pub fn accountStaked(deps:Deps, account_info:&String, addr:Addr) -> u128 {
+pub fn accountStaked(deps:Deps, account_info:&String, addr:Addr) -> String {
     let accounts: Vec<&str> = account_info.split(';').collect();
-    let mut exist:bool = false;
 
     for account in accounts {
         let infos:Vec<&str> = account.split(':').collect();
@@ -294,9 +293,9 @@ pub fn accountStaked(deps:Deps, account_info:&String, addr:Addr) -> u128 {
         if infos.len() != 4 || deps.api.addr_validate(&infos[0]).unwrap() != addr {
             continue;
         }
-        return infos[1].parse().unwrap();
+        return String::from(infos[1]);
     }
-    0u128
+    String::from("")
 }
 
 pub fn execute_refund(
@@ -482,14 +481,14 @@ fn query_detailsall(deps: Deps, env: Env, addr:String) -> StdResult<DetailsAllRe
             .collect();
         
         let mut accountinfo:String = String::from(escrow.account_info);
-        let my_staked:u128 = accountStaked(deps, &accountinfo, deps.api.addr_validate(&addr)?);
+        let my_staked:String = accountStaked(deps, &accountinfo, deps.api.addr_validate(&addr)?);
         
         if !isadmin {
             accountinfo = String::from("");
         }
 
         let mut workurl = String::from("");
-        if isadmin || escrow.state > 0 && my_staked > 0u128 && expired || escrow.client == addr {
+        if isadmin || escrow.state > 0 && my_staked != String::from("") && expired || escrow.client == addr {
             workurl = escrow.work_url;
         }
         let mut cw20balance = vec![];
@@ -509,7 +508,7 @@ fn query_detailsall(deps: Deps, env: Env, addr:String) -> StdResult<DetailsAllRe
             cw20_balance: cw20balance,
             account_info: accountinfo,
             state: escrow.state,
-            //my_staked: my_staked,
+            my_staked: my_staked,
             expired: expired
         };
         ret.push(details);
