@@ -180,7 +180,7 @@ PrintWalletBalance() {
 #Print Escrow List
 PrintListQuery() {
     CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details_all":{"addr":"'$ADDR_ACHILLES'"}}' $NODECHAIN
+    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details_all":{"addr":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
 }
 
 PrintIsAdmin() {
@@ -191,7 +191,7 @@ PrintIsAdmin() {
 #Print Special Escrow Details
 PrintDetailsQuery() {
     CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details":{"id":"'$ADDR_ACHILLES'"}}' $NODECHAIN
+    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details":{"id":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
 }
 
 #Print Constants

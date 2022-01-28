@@ -284,7 +284,7 @@ pub fn execute_approve (
     }
 }
 
-pub fn accountStaked(deps:Deps, account_info:&String, addr:Addr) -> String {
+pub fn accountStaked(deps:Deps, account_info:&String, addr:Addr) -> (String, String) {
     let accounts: Vec<&str> = account_info.split(';').collect();
 
     for account in accounts {
@@ -293,9 +293,9 @@ pub fn accountStaked(deps:Deps, account_info:&String, addr:Addr) -> String {
         if infos.len() != 4 || deps.api.addr_validate(&infos[0]).unwrap() != addr {
             continue;
         }
-        return String::from(infos[1]);
+        return (String::from(account), String::from(infos[1]));
     }
-    String::from("")
+    (String::from(""), String::from(""))
 }
 
 pub fn execute_refund(
@@ -337,8 +337,8 @@ pub fn execute_refund(
             let end_time = infos[3];
             exist = true;
 
-            if env.block.time > Timestamp::from_seconds(end_time.parse().unwrap()) ||
-            env.block.time < Timestamp::from_seconds(start_time.parse().unwrap())
+            if env.block.time < Timestamp::from_seconds(end_time.parse().unwrap()) ||
+            env.block.time > Timestamp::from_seconds(start_time.parse().unwrap())
             {
                 return Err(ContractError::AccountNotExpired {});
             } else {
@@ -481,10 +481,10 @@ fn query_detailsall(deps: Deps, env: Env, addr:String) -> StdResult<DetailsAllRe
             .collect();
         
         let mut accountinfo:String = String::from(escrow.account_info);
-        let my_staked:String = accountStaked(deps, &accountinfo, deps.api.addr_validate(&addr)?);
+        let (my_staked_all, my_staked) = accountStaked(deps, &accountinfo, deps.api.addr_validate(&addr)?);
         
         if !isadmin {
-            accountinfo = String::from("");
+            accountinfo = my_staked_all;
         }
 
         let mut workurl = String::from("");
