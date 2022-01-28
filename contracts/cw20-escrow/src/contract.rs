@@ -509,7 +509,7 @@ fn query_detailsall(deps: Deps, env: Env, addr:String) -> StdResult<DetailsAllRe
             cw20_balance: cw20balance,
             account_info: accountinfo,
             state: escrow.state,
-            my_staked: my_staked,
+            //my_staked: my_staked,
             expired: expired
         };
         ret.push(details);

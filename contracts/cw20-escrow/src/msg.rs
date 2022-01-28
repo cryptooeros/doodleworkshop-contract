@@ -131,7 +131,7 @@ pub struct DetailsResponse {
     // pub account_info: Vec<AccountInfo>,
     pub account_info: String,
     pub state: u8,
-    pub my_staked: u128,
+    // pub my_staked: u128,
     pub expired: bool
    
 }
