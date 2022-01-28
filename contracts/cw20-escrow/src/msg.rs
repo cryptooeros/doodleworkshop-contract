@@ -132,7 +132,8 @@ pub struct DetailsResponse {
     pub account_info: String,
     pub state: u8,
     pub my_staked: String,
-    pub expired: bool
+    pub expired: bool,
+    pub timestamp: String
    
 }
 

@@ -337,7 +337,7 @@ pub fn execute_refund(
             let end_time = infos[3];
             exist = true;
 
-            if env.block.time < Timestamp::from_seconds(end_time.parse().unwrap()) ||
+            if env.block.time < Timestamp::from_seconds(end_time.parse().unwrap()) &&
             env.block.time > Timestamp::from_seconds(start_time.parse().unwrap())
             {
                 return Err(ContractError::AccountNotExpired {});
@@ -509,7 +509,8 @@ fn query_detailsall(deps: Deps, env: Env, addr:String) -> StdResult<DetailsAllRe
             account_info: accountinfo,
             state: escrow.state,
             my_staked: my_staked,
-            expired: expired
+            expired: expired,
+            timestamp: env.block.time.seconds().to_string()
         };
         ret.push(details);
     }

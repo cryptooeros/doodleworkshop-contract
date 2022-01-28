@@ -42,9 +42,7 @@ pub enum ContractError {
     #[error("Work is expired")]
     Expired {},
 
-    
-
-    #[error("Still in your staking expired")]
+    #[error("Still in your staking period")]
     AccountNotExpired {},
 
     #[error("Send some coins to create an escrow")]
