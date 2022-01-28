@@ -99,7 +99,7 @@ pub enum QueryMsg {
     List {},
     // Details { id: String },
     DetailsAll {addr: String},
-    Constants {addr: String},
+    Constants {},
     IsAdmin { addr: String},
 }
 

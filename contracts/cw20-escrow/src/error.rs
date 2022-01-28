@@ -50,6 +50,9 @@ pub enum ContractError {
     #[error("Send some coins to create an escrow")]
     EmptyBalance {},
 
+    #[error("Stake is ended")]
+    StakeFinished {},
+
     #[error("Escrow id already in use")]
     AlreadyInUse {},
 
