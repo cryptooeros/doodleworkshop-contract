@@ -127,7 +127,8 @@ pub struct Escrow {
     pub balance: GenericBalance,
     /// All possible contracts that we accept tokens from
     pub cw20_whitelist: Vec<Addr>,
-    pub state: u8
+    pub state: u8,
+    pub image_url: String
 }
 
 impl Escrow {
@@ -181,7 +182,8 @@ mod tests {
             account_info: String::from(""),
             account_min_stake_amount: 10,
             stake_amount: 10,
-            state: 0
+            state: 0,
+            image_url: String::from("empty")
         }
     }
 

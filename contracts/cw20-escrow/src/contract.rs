@@ -150,7 +150,8 @@ pub fn execute_create(
         stake_amount: msg.stake_amount,
         balance: escrow_balance,
         cw20_whitelist,
-        state: 0 // created state
+        state: 0, // created state
+        image_url: msg.image_url
     };
 
     // try to store it, fail if the id was already in use
@@ -510,7 +511,8 @@ fn query_detailsall(deps: Deps, env: Env, addr:String) -> StdResult<DetailsAllRe
             state: escrow.state,
             my_staked: my_staked,
             expired: expired,
-            timestamp: env.block.time.seconds().to_string()
+            timestamp: env.block.time.seconds().to_string(),
+            image_url: escrow.image_url
         };
         ret.push(details);
     }
@@ -568,6 +570,7 @@ mod tests {
             work_desc: String::from("desc"),
             account_min_stake_amount: 10,
             stake_amount: 100,
+            image_url: String::from("empty")
         };
         let receive = Cw20ReceiveMsg {
             sender: String::from("source"),
@@ -699,6 +702,7 @@ mod tests {
             work_desc: String::from("desc"),
             account_min_stake_amount: 10,
             stake_amount: 100,
+            image_url: String::from("empty")
         };
         let sender = String::from("source");
         let balance = vec![coin(100, "fee"), coin(200, "stake")];

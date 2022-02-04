@@ -56,7 +56,8 @@ pub struct CreateMsg {
     pub work_url: String,
     pub start_time: Option<u64>,
     pub account_min_stake_amount : u64,
-    pub stake_amount: u64
+    pub stake_amount: u64,
+    pub image_url: String
 }
 
 
@@ -133,7 +134,8 @@ pub struct DetailsResponse {
     pub state: u8,
     pub my_staked: String,
     pub expired: bool,
-    pub timestamp: String
+    pub timestamp: String,
+    pub image_url: String
    
 }
 
