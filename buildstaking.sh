@@ -10,9 +10,9 @@ PARAM=$1
 #DENOM="ujuno"
 #CONTRACT_CREW="juno18cpnn3cnrr9xq7r0cqp7shl7slasf27nrmskw4rrw8c6hyp8u7rqe2nulg"
 
-#NODE="--node https://rpc.juno.giansalex.dev:443"
-NODE="--node https://rpc.uni.junomint.com:443"
-CHAIN_ID=uni-1
+NODE="--node https://rpc.juno.giansalex.dev:443"
+#NODE="--node https://rpc.uni.junomint.com:443"
+CHAIN_ID=uni-2
 DENOM="ujunox"
 CONTRACT_CREW="juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz"
 
