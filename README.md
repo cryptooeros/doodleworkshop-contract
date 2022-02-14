@@ -8,3 +8,5 @@ https://docs.google.com/document/d/13dq6fH91W3dP3qhqZhl18fxOzexPVETkmn8lPV0F-zo/
 https://drive.google.com/file/d/1mkMjkNPg3RMDL04FBjpw4F9BMRV8MV6n/view?usp=sharing
 
 My telegram id is @CryptooPegasus.I have to know your id as I have other friends on Telegram.If you send me your id, I will introduce you to them.Best...
+
+**************When read, remove this content....***********
