@@ -1,3 +1,4 @@
+Balam is my secondary mail, not send. Just send phantomtop0127@gmail.com
 I received your job request from my recruiter.In fact, your resume and cv is too poor and complex to read.
 I think you have to change the style as the template I am sending.However, I will put you some frontend task or introduce you to other clients if possible.
 For more information about your resume reference, visit the following sites.
