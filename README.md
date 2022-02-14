@@ -1,3 +1,6 @@
+This is written by phantomtop0127@gmail.com
+Call me @CryptooPegasus on Telegram for more information.
+
 # CosmWasm Tokens
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/cw-plus/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cw-plus/tree/master)
