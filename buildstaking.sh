@@ -26,13 +26,14 @@ WALLET="--from workshop"
 RELEASE="release/"
 WASMRAWFILE="doodle.wasm"
 WASMFILE=$RELEASE$WASMRAWFILE
+
 FILE_UPLOADHASH="uploadtx.txt"
-FILE_WORKSHOP_CONTRACT_ADDR="contractaddr.txt"
+FILE_CONTRACT_ADDR="contractaddr.txt"
 FILE_CODE_ID="code.txt"
 
 ADDR_WORKSHOP="juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s"
 ADDR_ARBITER="juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s"
-ADDR_ADMIN=ADDR_WORKSHOP
+ADDR_ADMIN=$ADDR_WORKSHOP
 
 ###################################################################################################
 ###################################################################################################
@@ -126,25 +127,25 @@ Instantiate() {
 
 #Print Escrow List
 PrintListQuery() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details_all":{"addr":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_ADDR '{"details_all":{"addr":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
 }
 
 PrintIsAdmin() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"is_admin":{"addr":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_ADDR '{"is_admin":{"addr":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
 }
 
 #Print Special Escrow Details
 PrintDetailsQuery() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"details":{"id":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_ADDR '{"details":{"id":"'$ADDR_WORKSHOP'"}}' $NODECHAIN
 }
 
 #Print Constants
 PrintConstants() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract-state smart $CONTRACT_WORKSHOP '{"constants":{}}' $NODECHAIN
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod query wasm contract-state smart $CONTRACT_ADDR '{"constants":{}}' $NODECHAIN
 }
 
 ###################################################################################################
@@ -153,35 +154,35 @@ PrintConstants() {
 ###################################################################################################
 #Create Test Escrow
 CreateEscrow() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"create":{"id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_WORKSHOP'", "recipient":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_ADDR '{"create":{"id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_WORKSHOP'", "recipient":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
 }
 
 #Transfer to Created Test Escrow
 TopUp() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"top_up":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_ADDR '{"top_up":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
 }
 
 CreateReceive() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"receive":{"sender":"'$ADDR_ACHILLES'", "amount":"15", "msg": { "id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_ARBITER'", "recipient":"'$ADDR_ACHILLES'" }}}' $WALLET $TXFLAG
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_ADDR '{"receive":{"sender":"'$ADDR_ACHILLES'", "amount":"15", "msg": { "id":"'$ADDR_ACHILLES'", "arbiter":"'$ADDR_ARBITER'", "recipient":"'$ADDR_ACHILLES'" }}}' $WALLET $TXFLAG
 }
 
 Approve() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"approve":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_ADDR '{"approve":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
 }
 
 Refund() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"refund":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_ADDR '{"refund":{"id":"'$ADDR_ACHILLES'"}}' $WALLET $TXFLAG
 }
 
 
 SetConstant() {
-    CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod tx wasm execute $CONTRACT_WORKSHOP '{"set_constant":{"manager_addr":"'$ADDR_WORKSHOP'", "min_stake":"0.01", "rate_client":"10", "rate_manager":"10"}}' $WALLET $TXFLAG
+    CONTRACT_ADDR=$(cat $FILE_CONTRACT_ADDR)
+    junod tx wasm execute $CONTRACT_ADDR '{"set_constant":{"manager_addr":"'$ADDR_WORKSHOP'", "min_stake":"0.01", "rate_client":"10", "rate_manager":"10"}}' $WALLET $TXFLAG
 }
 
 
