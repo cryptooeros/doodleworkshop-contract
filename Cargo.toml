@@ -1,34 +1,33 @@
-[workspace]
-members = ["contracts/*"]
+[package]
+name = "doodle"
+version = "0.11.1"
+authors = [""]
+edition = "2018"
+description = "Implementation of an escrow that accepts CosmWasm-20 tokens as well as native tokens"
+license = "Apache-2.0"
+repository = "https://github.com/CosmWasm/cw-tokens"
+homepage = "https://cosmwasm.com"
+documentation = "https://docs.cosmwasm.com"
 
-[profile.release.package.cw20-atomic-swap]
-codegen-units = 1
-incremental = false
+[lib]
+crate-type = ["cdylib", "rlib"]
 
-[profile.release.package.cw20-bonding]
-codegen-units = 1
-incremental = false
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
 
-[profile.release.package.cw20-escrow]
-codegen-units = 1
-incremental = false
+[dependencies]
+cw-utils = { version = "0.11.1" }
+cw2 = { version = "0.11.1" }
+cw20 = { version = "0.11.1" }
+cosmwasm-std = { version = "1.0.0-beta3" }
+cw-storage-plus = { version = "0.11.1" }
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.23" }
 
-[profile.release.package.cw20-merkle-airdrop]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.cw20-staking]
-codegen-units = 1
-incremental = false
-
-[profile.release.package.cw20-streams]
-codegen-units = 1
-incremental = false
-
-[profile.release]
-rpath = false
-lto = true
-overflow-checks = true
-opt-level = 3
-debug = false
-debug-assertions = false
+[dev-dependencies]
+cosmwasm-schema = { version = "1.0.0-beta3" }
+cw-multi-test = { version = "0.11.1" }
+cw20-base = { version = "0.11.1", features = ["library"] }

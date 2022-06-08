@@ -39,6 +39,9 @@ pub enum ContractError {
     #[error("Only accepts tokens in the cw20_whitelist")]
     NotInWhitelist {},
 
+    #[error("NotCrewToken")]
+    NotCrew {},
+
     #[error("Work is expired")]
     Expired {},
 

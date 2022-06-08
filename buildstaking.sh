@@ -5,33 +5,34 @@ PARAM=$1
 ####################################    Constants    ##################################################
 
 #depends on mainnet or testnet
-#NODE="--node https://rpc.junomint.com:443"
-#CHAIN_ID=juno-1
-#DENOM="ujuno"
-#CONTRACT_CREW="juno18cpnn3cnrr9xq7r0cqp7shl7slasf27nrmskw4rrw8c6hyp8u7rqe2nulg"
+NODE="--node https://rpc-juno.itastakers.com:443"
+CHAIN_ID=juno-1
+DENOM="ujuno"
+CONTRACT_CREW="juno1ugc7q54m0vtyc05kfmn69g8zx55z8s9mz5u05v3cden7yjqdxd4sk52wac"
 
-NODE="--node https://rpc.juno.giansalex.dev:443"
-#NODE="--node https://rpc.uni.junomint.com:443"
-CHAIN_ID=uni-2
-DENOM="ujunox"
-CONTRACT_CREW="juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz"
+##########################################################################################
 
-#Another CW20
-#BIGTESTADDR="juno1dj87fruymmpk77lrpx2cjqwr5j5ue3kjd3ljee6g4kjj3hxg4yqsrmh5y0"
+# NODE="--node https://rpc.juno.giansalex.dev:443"
+# CHAIN_ID=uni-3
+# DENOM="ujunox"
+##########################################################################################
+# CONTRACT_CREW="juno1fjspqgdn4v88rwz9gw8zn4d38fp07cxnrtgw3jtah2j6nymzxgpqqp94xz"
 
 #not depends
 NODECHAIN=" $NODE --chain-id $CHAIN_ID"
-TXFLAG=" $NODECHAIN --gas-prices 0.03$DENOM --gas auto --gas-adjustment 1.3"
+TXFLAG=" $NODECHAIN --gas-prices 0.01$DENOM --gas auto --gas-adjustment 1.3"
 WALLET="--from workshop"
-WASMFILE="artifacts/cw20_escrow.wasm"
 
+RELEASE="release/"
+WASMRAWFILE="doodle.wasm"
+WASMFILE=$RELEASE$WASMRAWFILE
 FILE_UPLOADHASH="uploadtx.txt"
 FILE_WORKSHOP_CONTRACT_ADDR="contractaddr.txt"
 FILE_CODE_ID="code.txt"
 
 ADDR_WORKSHOP="juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s"
-ADDR_ACHILLES="juno15fg4zvl8xgj3txslr56ztnyspf3jc7n9j44vhz"
-ADDR_ARBITER="juno1m0snhthwl80hweae54fwre97y47urlxjf5ua6j"
+ADDR_ARBITER="juno1htjut8n7jv736dhuqnad5mcydk6tf4ydeaan4s"
+ADDR_ADMIN=ADDR_WORKSHOP
 
 ###################################################################################################
 ###################################################################################################
@@ -56,119 +57,65 @@ CreateEnv() {
     git clone https://github.com/CosmosContracts/juno
     cd juno
     git fetch
-    git checkout v2.1.0
+    git checkout v6.0.0
     make install
-
+    cd ../
     rm -rf juno
-
-    junod keys import workshop workshop.key
-
 }
 
-#Contract Functions
-
-#Build Optimized Contracts
-OptimizeBuild() {
-
-    echo "================================================="
-    echo "Optimize Build Start"
-    
-    docker run --rm -v "$(pwd)":/code \
-        --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-        --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-        cosmwasm/rust-optimizer:0.12.4
-}
-
-RustBuild() {
-
+Upload() {
     echo "================================================="
     echo "Rust Optimize Build Start"
+    mkdir release
+    # RUSTFLAGS='-C link-arg=-s' cargo wasm
+    # cp target/wasm32-unknown-unknown/$WASMFILE $WASMFILE
 
-    cd contracts/cw20-escrow
-    RUSTFLAGS='-C link-arg=-s' cargo wasm
+    docker run --rm -v "$(pwd)":/code \
+    --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+    --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+    cosmwasm/rust-optimizer:0.12.6
+    cp artifacts/$WASMRAWFILE $WASMFILE
+    
+    
 
-    cd ../../
-    mkdir artifacts
-    cp target/wasm32-unknown-unknown/release/cw20_escrow.wasm $WASMFILE
-}
-
-#Writing to FILE_UPLOADHASH
-Upload() {
     echo "================================================="
     echo "Upload $WASMFILE"
     
     UPLOADTX=$(junod tx wasm store $WASMFILE $WALLET $TXFLAG --output json -y | jq -r '.txhash')
     echo "Upload txHash:"$UPLOADTX
     
-    #save to FILE_UPLOADHASH
-    echo $UPLOADTX > $FILE_UPLOADHASH
-    echo "wrote last transaction hash to $FILE_UPLOADHASH"
-}
-
-#Read code from FILE_UPLOADHASH
-GetCode() {
     echo "================================================="
-    echo "Get code from transaction hash written on $FILE_UPLOADHASH"
-    
-    #read from FILE_UPLOADHASH
-    TXHASH=$(cat $FILE_UPLOADHASH)
-    echo "read last transaction hash from $FILE_UPLOADHASH"
-    echo $TXHASH
-    
-    QUERYTX="junod query tx $TXHASH $NODECHAIN --output json"
-	CODE_ID=$(junod query tx $TXHASH $NODECHAIN --output json | jq -r '.logs[0].events[-1].attributes[0].value')
-	echo "Contract Code_id:"$CODE_ID
+    echo "GetCode"
+	CODE_ID=""
+    while [[ $CODE_ID == "" ]]
+    do 
+        sleep 3
+        CODE_ID=$(junod query tx $UPLOADTX $NODECHAIN --output json | jq -r '.logs[0].events[-1].attributes[0].value')
+    done
+    echo "Contract Code_id:"$CODE_ID
 
     #save to FILE_CODE_ID
     echo $CODE_ID > $FILE_CODE_ID
 }
 
-#Instantiate Contract
-Instantiate() {
+Instantiate() { 
     echo "================================================="
     echo "Instantiate Contract"
-    
     #read from FILE_CODE_ID
     CODE_ID=$(cat $FILE_CODE_ID)
-    junod tx wasm instantiate $CODE_ID '{}' --label "WorkShop" $WALLET $TXFLAG -y
-}
-
-#Get Instantiated Contract Address
-GetContractAddress() {
-    echo "================================================="
-    echo "Get contract address by code"
-    
+    echo $CODE_ID
     #read from FILE_CODE_ID
-    CODE_ID=$(cat $FILE_CODE_ID)
-    CONTRACT_ADDR=$(junod query wasm list-contract-by-code $CODE_ID $NODECHAIN --output json | jq -r '.contracts[0]')
     
-    echo "Contract Address : "$CONTRACT_ADDR
-
-    #save to FILE_WORKSHOP_CONTRACT_ADDR
-    echo $CONTRACT_ADDR > $FILE_WORKSHOP_CONTRACT_ADDR
-}
-
-
-###################################################################################################
-###################################################################################################
-###################################################################################################
-###################################################################################################
-#Global Utility Functions
-ListCode() {
-    junod query wasm list-code $NODECHAIN --output json
-}
-
-PrintContractState() {
-    $CONTRACT_WORKSHOP=$(cat $FILE_WORKSHOP_CONTRACT_ADDR)
-    junod query wasm contract $? $NODECHAIN
-}
-
-PrintContractStateAll() {
-    junod query wasm contract-state all $? $NODECHAIN --output json
-}
-
-PrintWalletBalance() {
-    junod query wasm contract-state smart $CONTRACT_CREW '{"balance":{"address":"'$ADDR_ACHILLES'"}}' $NODECHAIN
+    TXHASH=$(junod tx wasm instantiate $CODE_ID '{"crew_address":"'$CONTRACT_CREW'"}' --label "DoodleWorkshop" --admin $ADDR_ADMIN $WALLET $TXFLAG -y --output json | jq -r '.txhash')
+    echo $TXHASH
+    CONTRACT_ADDR=""
+    while [[ $CONTRACT_ADDR == "" ]]
+    do
+        sleep 3
+        CONTRACT_ADDR=$(junod query tx $TXHASH $NODECHAIN --output json | jq -r '.logs[0].events[0].attributes[0].value')
+    done
+    echo $CONTRACT_ADDR
+    echo $CONTRACT_ADDR > $FILE_CONTRACT_ADDR
 }
 
 ###################################################################################################

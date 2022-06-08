@@ -6,7 +6,9 @@ use crate::state::{AccountInfo};
 use cw20::{Cw20Coin, Cw20ReceiveMsg};
 
 #[derive(Serialize, Deserialize, JsonSchema)]
-pub struct InstantiateMsg {}
+pub struct InstantiateMsg {
+    pub crew_address: String
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
